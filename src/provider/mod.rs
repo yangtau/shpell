@@ -11,7 +11,10 @@ pub struct GenRequest {
 }
 
 pub trait Provider {
-    fn generate(&self, req: &GenRequest) -> Result<String>;
+    /// Generate a shell command. `on_progress` is called with the cleaned
+    /// command-so-far each time it grows, enabling live streaming; callers
+    /// that don't stream pass a no-op. The final command is returned.
+    fn generate(&self, req: &GenRequest, on_progress: &mut dyn FnMut(&str)) -> Result<String>;
 }
 
 pub fn from_config(cfg: &Config) -> Result<Box<dyn Provider>> {

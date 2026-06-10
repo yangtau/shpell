@@ -45,7 +45,7 @@ fn message(role: &str, text: &str) -> Value {
 }
 
 impl Provider for OpenAiChatGpt {
-    fn generate(&self, req: &GenRequest) -> Result<String> {
+    fn generate(&self, req: &GenRequest, on_progress: &mut dyn FnMut(&str)) -> Result<String> {
         let (token, account_id) = auth::access()?;
 
         let body = json!({
@@ -96,6 +96,10 @@ impl Provider for OpenAiChatGpt {
                 "response.output_text.delta" => {
                     if let Some(d) = event["delta"].as_str() {
                         out.push_str(d);
+                        let snapshot = super::postprocess(&out);
+                        if !snapshot.is_empty() {
+                            on_progress(&snapshot);
+                        }
                     }
                 }
                 "response.failed" | "error" => {
