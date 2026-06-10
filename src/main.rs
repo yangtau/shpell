@@ -1,4 +1,5 @@
 mod auth;
+mod compose;
 mod config;
 mod provider;
 mod shell;
@@ -21,13 +22,20 @@ enum Cmd {
         #[arg(long, default_value = "zsh")]
         shell: String,
         /// Stream the command as it is generated, printing each growing
-        /// snapshot on its own line (the zsh integration consumes this for
-        /// live display); without it the final command is printed once
+        /// snapshot on its own line; without it the final command is
+        /// printed once
         #[arg(long)]
         stream: bool,
         /// Natural language description of the command
         #[arg(required = true, num_args = 1.., trailing_var_arg = true)]
         query: Vec<String>,
+    },
+    /// Interactive X mode: type a request, watch the command stream in,
+    /// press Enter to accept (used by the zsh integration's Tab binding)
+    Compose {
+        /// Target shell the command will run in
+        #[arg(long, default_value = "zsh")]
+        shell: String,
     },
     /// Manage LLM provider credentials
     Auth {
@@ -51,7 +59,9 @@ enum AuthCmd {
     Status,
 }
 
-const SUBCOMMANDS: &[&str] = &["gen", "auth", "init", "help", "-h", "--help", "-V", "--version"];
+const SUBCOMMANDS: &[&str] = &[
+    "gen", "compose", "auth", "init", "help", "-h", "--help", "-V", "--version",
+];
 
 fn main() {
     // `x <free text>` is shorthand for `x gen <free text>`.
@@ -103,6 +113,7 @@ fn run(cli: Cli) -> Result<()> {
                 println!("{command}");
             }
         }
+        Cmd::Compose { shell } => compose::run(&shell)?,
         Cmd::Auth { cmd } => match cmd {
             AuthCmd::Login => auth::login()?,
             AuthCmd::Logout => auth::logout()?,

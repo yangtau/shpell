@@ -1,0 +1,141 @@
+//! Interactive "X mode": a chat-style loop run on the user's terminal.
+//!
+//! The zsh widget launches `x compose` with stdin and stderr attached to the
+//! tty and captures stdout. All UI (icons, streaming, spinner) is drawn on
+//! stderr, completely outside zle — so the natural-language text never meets
+//! shell parsing, syntax highlighting or history expansion. The only thing
+//! ever written to stdout is the accepted command, and the exit code tells
+//! the widget what to do with it:
+//!
+//!   0   run the command
+//!   10  put it on the prompt for editing
+//!   1   cancel (also: Ctrl-C / Ctrl-D)
+
+use crate::config::Config;
+use crate::provider::{self, GenRequest, Provider};
+use anyhow::Result;
+use std::io::{BufRead, Write};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
+
+const EXIT_EDIT: i32 = 10;
+const EXIT_CANCEL: i32 = 1;
+const SPINNER: &[&str] = &["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+
+fn icon(var: &str, default: &str) -> String {
+    std::env::var(var).unwrap_or_else(|_| default.into())
+}
+
+pub fn run(shell: &str) -> Result<()> {
+    let cfg = Config::load()?;
+    let provider = provider::from_config(&cfg)?;
+    let user_icon = icon("X_USER_ICON", "󰀄");
+    let ai_icon = icon("X_AI_ICON", "󰚩");
+
+    // take over the line the zsh prompt was sitting on
+    eprint!("\r\x1b[K");
+
+    let stdin = std::io::stdin();
+    let mut command = String::new();
+    let mut hinted = false;
+    loop {
+        eprint!("\x1b[1;32m{user_icon}\x1b[0m ");
+        let _ = std::io::stderr().flush();
+        let mut line = String::new();
+        if stdin.lock().read_line(&mut line)? == 0 {
+            // Ctrl-D
+            eprintln!();
+            std::process::exit(EXIT_CANCEL);
+        }
+        let input = line.trim();
+        if input.is_empty() {
+            if command.is_empty() {
+                std::process::exit(EXIT_CANCEL);
+            }
+            println!("{command}");
+            return Ok(()); // exit 0: run it
+        }
+        if input == "e" && !command.is_empty() {
+            println!("{command}");
+            std::process::exit(EXIT_EDIT);
+        }
+        let query = if command.is_empty() {
+            input.to_string()
+        } else {
+            format!("Previously generated command: `{command}`. Revise it per this request: {input}")
+        };
+        let req = GenRequest {
+            query,
+            shell: shell.to_string(),
+            os: std::env::consts::OS.to_string(),
+            cwd: std::env::current_dir()
+                .map(|p| p.display().to_string())
+                .unwrap_or_default(),
+        };
+        match stream(provider.as_ref(), &req, &ai_icon) {
+            Ok(cmd) => {
+                command = cmd;
+                if !hinted {
+                    hinted = true;
+                    eprintln!("\x1b[2m  ↵ run · e edit · type to refine · ^C cancel\x1b[0m");
+                }
+            }
+            Err(e) => eprintln!("\r\x1b[K\x1b[31mx: {e:#}\x1b[0m"),
+        }
+    }
+}
+
+/// Stream one generation onto a single line — `󰚩 <command-so-far> ⠋` — with
+/// the spinner trailing the text until the model finishes. A painter thread
+/// redraws the line every 80ms so the spinner animates even while the model
+/// reasons silently; the generate callback just updates the shared snapshot.
+fn stream(provider: &dyn Provider, req: &GenRequest, ai_icon: &str) -> Result<String> {
+    let cols: usize = std::env::var("COLUMNS")
+        .ok()
+        .and_then(|c| c.parse().ok())
+        .unwrap_or(80);
+    let snapshot = Arc::new(Mutex::new(String::new()));
+    let done = Arc::new(AtomicBool::new(false));
+
+    let painter = {
+        let snapshot = Arc::clone(&snapshot);
+        let done = Arc::clone(&done);
+        let icon = ai_icon.to_string();
+        std::thread::spawn(move || {
+            let mut frame = 0;
+            while !done.load(Ordering::Relaxed) {
+                let snap = snapshot.lock().unwrap().clone();
+                paint(&icon, &snap, Some(SPINNER[frame % SPINNER.len()]), cols);
+                frame += 1;
+                std::thread::sleep(Duration::from_millis(80));
+            }
+        })
+    };
+
+    let result = provider.generate(req, &mut |s: &str| {
+        *snapshot.lock().unwrap() = s.to_string();
+    });
+    done.store(true, Ordering::Relaxed);
+    let _ = painter.join();
+
+    let cmd = result?;
+    paint(ai_icon, &cmd, None, usize::MAX);
+    eprintln!();
+    Ok(cmd)
+}
+
+/// Redraw the response line in place, truncated to the terminal width so the
+/// `\r` redraw never wraps onto a second line mid-stream.
+fn paint(icon: &str, text: &str, spinner: Option<&str>, cols: usize) {
+    let budget = cols.saturating_sub(6); // icon, spaces, spinner, ellipsis
+    let mut shown: String = text.chars().take(budget).collect();
+    if shown.chars().count() < text.chars().count() {
+        shown.push('…');
+    }
+    let tail = spinner
+        .map(|f| format!(" \x1b[2m{f}\x1b[0m"))
+        .unwrap_or_default();
+    eprint!("\r\x1b[K\x1b[1;36m{icon}\x1b[0m {shown}{tail}");
+    let _ = std::io::stderr().flush();
+}
