@@ -83,23 +83,35 @@ _x_accept_line() {
 }
 
 _x_generate() {
-  local query=$1 out ret
+  local query=$1 line got errf fd
   zle -M "x: generating…"
-  out=$(command x gen --shell zsh -- "$query" 2>&1)
-  ret=$?
+  # Stream snapshots: `x gen --stream` prints the command-so-far one line at a
+  # time on stdout; errors go to stderr and leave stdout empty. We redraw the
+  # buffer on every line so the command appears to type itself.
+  errf=$(mktemp)
+  exec {fd}< <(command x gen --shell zsh --stream -- "$query" 2>$errf)
+  got=
+  while IFS= read -r -u $fd line; do
+    got=$line
+    BUFFER=$line
+    CURSOR=$#BUFFER
+    zle -R
+  done
+  exec {fd}<&-
   # discard keys typed while generation blocked the editor: they would land
   # inside the command (or a queued Enter would run it without review)
   local _junk
   while (( PENDING > 0 )); do read -k 1 _junk; done
-  if (( ret == 0 )) && [[ -n $out ]]; then
-    BUFFER=$out
+  if [[ -n $got ]]; then
+    BUFFER=$got
     [[ -n $X_TAG ]] && BUFFER="$BUFFER  $X_TAG"
     CURSOR=$#BUFFER
     # full redraw: `zle -M ""` does not erase the "generating…" message
     zle reset-prompt
   else
-    zle -M "x: ${out:-generation failed}"
+    zle -M "x: ${$(<$errf):-generation failed}"
   fi
+  rm -f $errf
 }
 
 zle -N _x_enter_mode
