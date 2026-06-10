@@ -75,7 +75,11 @@ _x_accept_line() {
     fi
     print -s -- "$query"   # keep the natural-language query in history
     BUFFER=
-    zle -R
+    # echo the query above so it stays on screen (REPL-style); the generated
+    # command then streams onto a fresh prompt line below it, instead of
+    # replacing the query in place
+    zle -I
+    print -r -- "${X_MODE_MARKER}${query}"
     _x_generate "$query"
     return 0
   fi
