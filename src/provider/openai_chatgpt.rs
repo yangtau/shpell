@@ -23,13 +23,14 @@ impl OpenAiChatGpt {
 
 fn developer_prompt(req: &GenRequest) -> String {
     format!(
-        "Translate the user's request into a single {shell} command.\n\
+        "Translate the user's request into a single line for a {shell} prompt.\n\
          Environment: os={os}, shell={shell}, cwd={cwd}\n\
          Rules:\n\
-         - Reply with ONLY the command, on a single line. No markdown, no code fences, no explanation.\n\
+         - If the request asks for a shell command, reply with ONLY that command on one line. No markdown, no code fences, no explanation.\n\
+         - If the request is conversational, a question, or otherwise not a command (e.g. a greeting or \"how are you\"), reply with a single-line comment answering it: `# <short answer>`. Do NOT wrap the answer in echo.\n\
+         - The reply is sent straight to the shell, so keep it to ONE line and avoid constructs that need escaping; in particular avoid an unescaped '!' (zsh history expansion).\n\
          - Prefer simple, idiomatic commands available on this OS.\n\
-         - Never make the command destructive (rm -rf, force flags, overwrites) unless explicitly requested.\n\
-         - If the request cannot be done in a command, reply: echo \"x: <short reason>\"",
+         - Never make the command destructive (rm -rf, force flags, overwrites) unless explicitly requested.",
         shell = req.shell,
         os = req.os,
         cwd = req.cwd,
