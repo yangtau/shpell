@@ -1,8 +1,8 @@
 # x — natural language to shell commands (zsh integration)
 #
 # Press Tab on an empty line to enter X mode: an interactive prompt run by
-# `x compose`, entirely outside zle. Type a request after the 󰀄 icon; the
-# generated command streams in after the 󰚩 icon with a trailing spinner.
+# `x compose`, entirely outside zle. Type a request after the ❯ prompt; the
+# generated command streams in after the ✻ icon, which pulses while generating.
 # Then:
 #   Enter (empty)   accept — back to zsh, the command lands on the prompt
 #                   and runs; the whole exchange stays on screen above it

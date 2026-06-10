@@ -3,13 +3,14 @@
 用自然语言写命令行命令。
 
 ```
-󰀄 create an empty file named test
-󰚩 touch test
+❯ create an empty file named test
+✻ touch test
 m3 :: ~/.config ‹main*› » touch test
 ```
 
 在 zsh 里空行按 **Tab** 进入 X 模式（一个独立于 zsh prompt 的交互界面）：
-在 󰀄 后输入自然语言，生成的命令在 󰚩 后流式出现（末尾带 spinner 动画）。然后：
+在 ❯ 后输入自然语言（支持方向键、粘贴、↑ 回溯本轮历史），生成的命令在 ✻
+后流式出现，生成期间 ✻ 像 Claude Code 一样脉冲闪动（✢ ✳ ✶ ✻ ✽）。然后：
 
 - **空行回车** — 接受：回到 zsh，命令上屏并执行，整段对话保留在屏幕上
 - **继续输入** — 追问，基于上一条命令继续修改
@@ -58,12 +59,12 @@ model = "gpt-5.2-codex"
 reasoning_effort = "low"       # minimal | low | medium | high
 ```
 
-X 模式的图标（需 Nerd Font；`export` 后对 `x compose` 生效）：
+X 模式的图标（纯 Unicode，任意字体可显示；`export` 后对 `x compose` 生效）：
 
 | 变量 | 默认 | 说明 |
 |---|---|---|
-| `X_USER_ICON` | `󰀄` | X 模式中用户输入行的图标 |
-| `X_AI_ICON` | `󰚩` | X 模式中 AI 输出行的图标 |
+| `X_USER_ICON` | `❯` | X 模式中用户输入行的图标 |
+| `X_AI_ICON` | `✻` | X 模式中 AI 输出行的图标（生成完成后的静止态） |
 
 也可以不装 shell 集成直接用：`x gen -- "find large files"` 或 `x find large files`。
 

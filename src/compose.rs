@@ -14,14 +14,17 @@
 use crate::config::Config;
 use crate::provider::{self, GenRequest, Provider};
 use anyhow::Result;
-use std::io::{BufRead, Write};
+use rustyline::error::ReadlineError;
+use std::io::Write;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 const EXIT_EDIT: i32 = 10;
 const EXIT_CANCEL: i32 = 1;
-const SPINNER: &[&str] = &["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+// Claude Code-style pulsing sparkle, shown in place of the AI icon while
+// generating (ping-pong order so the pulse breathes instead of jumping)
+const SPARKLE: &[&str] = &["✢", "✳", "✶", "✻", "✽", "✻", "✶", "✳"];
 
 fn icon(var: &str, default: &str) -> String {
     std::env::var(var).unwrap_or_else(|_| default.into())
@@ -30,24 +33,34 @@ fn icon(var: &str, default: &str) -> String {
 pub fn run(shell: &str) -> Result<()> {
     let cfg = Config::load()?;
     let provider = provider::from_config(&cfg)?;
-    let user_icon = icon("X_USER_ICON", "󰀄");
-    let ai_icon = icon("X_AI_ICON", "󰚩");
+    let user_icon = icon("X_USER_ICON", "❯");
+    let ai_icon = icon("X_AI_ICON", "✻");
 
     // take over the line the zsh prompt was sitting on
     eprint!("\r\x1b[K");
+    let _ = std::io::stderr().flush();
 
-    let stdin = std::io::stdin();
+    // rustyline provides real line editing for the query (arrow keys,
+    // bracketed paste, Up-arrow recall of earlier queries). PreferTerm makes
+    // it talk to /dev/tty directly, so stdout stays a clean result channel
+    // for the widget to capture.
+    let mut rl = rustyline::DefaultEditor::with_config(
+        rustyline::Config::builder()
+            .behavior(rustyline::config::Behavior::PreferTerm)
+            .build(),
+    )?;
+
     let mut command = String::new();
     let mut hinted = false;
     loop {
-        eprint!("\x1b[1;32m{user_icon}\x1b[0m ");
-        let _ = std::io::stderr().flush();
-        let mut line = String::new();
-        if stdin.lock().read_line(&mut line)? == 0 {
-            // Ctrl-D
-            eprintln!();
-            std::process::exit(EXIT_CANCEL);
-        }
+        let line = match rl.readline(&format!("{user_icon} ")) {
+            Ok(l) => l,
+            // Ctrl-C / Ctrl-D
+            Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {
+                std::process::exit(EXIT_CANCEL)
+            }
+            Err(e) => return Err(e.into()),
+        };
         let input = line.trim();
         if input.is_empty() {
             if command.is_empty() {
@@ -60,6 +73,7 @@ pub fn run(shell: &str) -> Result<()> {
             println!("{command}");
             std::process::exit(EXIT_EDIT);
         }
+        let _ = rl.add_history_entry(input);
         let query = if command.is_empty() {
             input.to_string()
         } else {
@@ -86,9 +100,10 @@ pub fn run(shell: &str) -> Result<()> {
     }
 }
 
-/// Stream one generation onto a single line — `󰚩 <command-so-far> ⠋` — with
-/// the spinner trailing the text until the model finishes. A painter thread
-/// redraws the line every 80ms so the spinner animates even while the model
+/// Stream one generation onto a single line — `✻ <command-so-far>` — with the
+/// leading icon pulsing through sparkle frames (Claude Code style) until the
+/// model finishes, then settling on the static AI icon. A painter thread
+/// redraws the line every 120ms so the pulse animates even while the model
 /// reasons silently; the generate callback just updates the shared snapshot.
 fn stream(provider: &dyn Provider, req: &GenRequest, ai_icon: &str) -> Result<String> {
     let cols: usize = std::env::var("COLUMNS")
@@ -101,14 +116,13 @@ fn stream(provider: &dyn Provider, req: &GenRequest, ai_icon: &str) -> Result<St
     let painter = {
         let snapshot = Arc::clone(&snapshot);
         let done = Arc::clone(&done);
-        let icon = ai_icon.to_string();
         std::thread::spawn(move || {
             let mut frame = 0;
             while !done.load(Ordering::Relaxed) {
                 let snap = snapshot.lock().unwrap().clone();
-                paint(&icon, &snap, Some(SPINNER[frame % SPINNER.len()]), cols);
+                paint(SPARKLE[frame % SPARKLE.len()], &snap, cols);
                 frame += 1;
-                std::thread::sleep(Duration::from_millis(80));
+                std::thread::sleep(Duration::from_millis(120));
             }
         })
     };
@@ -120,22 +134,19 @@ fn stream(provider: &dyn Provider, req: &GenRequest, ai_icon: &str) -> Result<St
     let _ = painter.join();
 
     let cmd = result?;
-    paint(ai_icon, &cmd, None, usize::MAX);
+    paint(ai_icon, &cmd, usize::MAX);
     eprintln!();
     Ok(cmd)
 }
 
 /// Redraw the response line in place, truncated to the terminal width so the
 /// `\r` redraw never wraps onto a second line mid-stream.
-fn paint(icon: &str, text: &str, spinner: Option<&str>, cols: usize) {
-    let budget = cols.saturating_sub(6); // icon, spaces, spinner, ellipsis
+fn paint(icon: &str, text: &str, cols: usize) {
+    let budget = cols.saturating_sub(4); // icon, spaces, ellipsis
     let mut shown: String = text.chars().take(budget).collect();
     if shown.chars().count() < text.chars().count() {
         shown.push('…');
     }
-    let tail = spinner
-        .map(|f| format!(" \x1b[2m{f}\x1b[0m"))
-        .unwrap_or_default();
-    eprint!("\r\x1b[K\x1b[1;36m{icon}\x1b[0m {shown}{tail}");
+    eprint!("\r\x1b[K\x1b[1;36m{icon}\x1b[0m {shown}");
     let _ = std::io::stderr().flush();
 }
