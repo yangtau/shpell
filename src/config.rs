@@ -30,7 +30,14 @@ impl Default for Config {
 
 impl Config {
     pub fn path() -> Result<PathBuf> {
-        let dir = dirs::config_dir().context("cannot locate config directory")?;
+        // ~/.config (XDG style) on every platform, as documented in the
+        // README; dirs::config_dir() would resolve to
+        // ~/Library/Application Support on macOS.
+        let dir = std::env::var_os("XDG_CONFIG_HOME")
+            .map(PathBuf::from)
+            .filter(|p| p.is_absolute())
+            .or_else(|| dirs::home_dir().map(|h| h.join(".config")))
+            .context("cannot locate config directory")?;
         Ok(dir.join("x").join("config.toml"))
     }
 

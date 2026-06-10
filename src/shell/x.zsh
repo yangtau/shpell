@@ -31,11 +31,19 @@ _x_accept_line() {
     zle -M "x: generating…"
     local out
     out=$(command x gen --shell zsh -- "$query" 2>&1)
-    if (( $? == 0 )) && [[ -n $out ]]; then
+    local ret=$?
+    # discard keys typed while generation blocked the editor: they would
+    # land inside the trailing comment tag, and a queued Enter would
+    # execute the generated command without review
+    local _junk
+    while (( PENDING > 0 )); do read -k 1 _junk; done
+    if (( ret == 0 )) && [[ -n $out ]]; then
       BUFFER=$out
       [[ -n $X_TAG ]] && BUFFER="$BUFFER  $X_TAG"
       CURSOR=$#BUFFER
-      zle -M ""
+      # a full redraw is needed here: `zle -M ""` does not erase the
+      # "generating…" message, which then interleaves with later output
+      zle reset-prompt
     else
       zle -M "x: ${out:-generation failed}"
     fi
