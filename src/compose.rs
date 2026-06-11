@@ -1,8 +1,8 @@
 //! Interactive "Shpell mode": a chat-style loop run on the user's terminal.
 //!
-//! The zsh widget launches `shpell compose` with stdin and stderr attached to the
-//! tty and captures stdout. All UI (icons, streaming, spinner) is drawn on
-//! stderr, completely outside zle — so the natural-language text never meets
+//! The shell integration launches `shpell compose` with stdin and stderr attached
+//! to the tty and captures stdout. All UI (icons, streaming, spinner) is drawn on
+//! stderr, completely outside zle/readline — so the natural-language text never meets
 //! shell parsing, syntax highlighting or history expansion. The only thing
 //! ever written to stdout is the accepted command, and the exit code tells
 //! the widget what to do with it:
@@ -35,7 +35,7 @@ pub fn run(shell: &str) -> Result<()> {
     let user_icon = icon("SHPELL_USER_ICON", "❯");
     let ai_icon = icon("SHPELL_AI_ICON", "✻");
 
-    // take over the line the zsh prompt was sitting on
+    // take over the line the shell prompt was sitting on
     eprint!("\r\x1b[K");
     let _ = std::io::stderr().flush();
 

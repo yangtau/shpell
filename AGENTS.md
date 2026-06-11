@@ -6,8 +6,8 @@ Guidance for AI coding agents working in this repository.
 
 `shpell` is a Rust CLI that turns natural language into shell commands. The
 binary is invoked two ways: directly (`shpell find large files`, shorthand for
-`shpell gen ...`) and via a zsh widget that runs `shpell compose` when Tab is
-pressed on an empty prompt line.
+`shpell gen ...`) and via shell integrations (zsh, bash) that run
+`shpell compose` when Tab is pressed on an empty prompt line.
 
 ## Commands
 
@@ -17,6 +17,7 @@ cargo test                     # unit tests (currently only provider::postproces
 cargo test postprocess         # run a single test by name filter
 cargo build --release
 zsh -n src/shell/shpell.zsh    # syntax-check the zsh integration script
+bash -n src/shell/shpell.bash  # syntax-check the bash integration script
 nix build                      # build via flake (CI parity not required locally)
 ```
 
@@ -34,6 +35,8 @@ The core design is a **two-process split with a strict stdout contract**:
   restores a cooked tty, and runs `shpell compose` with stdin/stderr attached
   to the tty while **capturing stdout**. Exit code `0` → stdout (the accepted
   command) is placed on the zsh prompt, NOT executed; anything else → cancel.
+  `src/shell/shpell.bash` implements the same contract for bash (≥ 4) via a
+  Tab-bound readline macro and a `bind -x` dispatch handler.
 - `src/compose.rs` runs the interactive loop (rustyline for input, streaming
   output with a pulsing-spinner painter thread). **All UI goes to stderr;
   stdout carries only the final accepted command.** Breaking this contract

@@ -31,7 +31,7 @@ enum Cmd {
         query: Vec<String>,
     },
     /// Interactive Shpell mode: type a request, watch the command stream in,
-    /// press Enter to accept (used by the zsh integration's Tab binding)
+    /// press Enter to accept (used by the shell integration's Tab binding)
     Compose {
         /// Target shell the command will run in
         #[arg(long, default_value = "zsh")]
@@ -44,7 +44,7 @@ enum Cmd {
     },
     /// Print the shell integration script (e.g. `eval "$(shpell init zsh)"`)
     Init {
-        /// Shell to integrate with (currently only: zsh)
+        /// Shell to integrate with (zsh or bash)
         shell: String,
     },
 }

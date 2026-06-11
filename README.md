@@ -9,7 +9,7 @@ it conjures the command.
 m3 :: ~/.config ‹main*› » touch test
 ```
 
-Press **Tab** on an empty line in zsh to enter Shpell mode — a small
+Press **Tab** on an empty line in zsh or bash to enter Shpell mode — a small
 interactive UI that lives outside the zsh prompt. Type what you want after
 `❯` (arrow keys, paste and ↑-recall all work); the command streams in after
 `✻`, which pulses while generating. Then:
@@ -70,10 +70,11 @@ the binary somewhere on your `PATH`.
    This prints a login URL; finish authorization in the browser (the callback
    listens on localhost:1455, same mechanism as the Codex CLI).
 
-2. Add to the end of `~/.zshrc`:
+2. Add to the end of `~/.zshrc` — or, for bash (4.0+), `~/.bashrc`:
 
    ```sh
-   eval "$(shpell init zsh)"
+   eval "$(shpell init zsh)"    # zsh
+   eval "$(shpell init bash)"   # bash
    ```
 
 3. Open a new terminal, hit Tab on an empty line, and write commands in plain
@@ -102,8 +103,8 @@ before use):
 
 ## Design
 
-Curious why it triggers via Tab instead of a prefix word, or how the zsh
-widget and the `shpell compose` process split the work? See
+Curious why it triggers via Tab instead of a prefix word, or how the shell
+integration and the `shpell compose` process split the work? See
 [docs/design.md](docs/design.md) (Chinese).
 
 ## License

@@ -40,6 +40,22 @@ spinner 也不会与 zle 重绘互相干扰。
 
 ## Shell 拓展
 
-`shpell init <shell>` 输出对应 shell 的集成脚本，目前仅 zsh
-（`src/shell/shpell.zsh`）；新增 shell 在 `src/shell/` 加脚本并在
-`init_script` 注册即可。
+`shpell init <shell>` 输出对应 shell 的集成脚本，目前支持 zsh
+（`src/shell/shpell.zsh`）和 bash（`src/shell/shpell.bash`）；新增 shell 在
+`src/shell/` 加脚本并在 `init_script` 注册即可。
+
+### bash 集成（`src/shell/shpell.bash`，需 bash ≥ 4）
+
+bash 的 readline 无法像 zle widget 那样在按键处理中条件分发，因此 Tab 被
+绑定为一个两键宏：
+
+1. 第一个键是 `bind -x` handler。行非空时把第二个键重绑回原来的补全函数
+   （加载时从 `bind -p` 捕获，默认 `complete`）；行为空时运行
+   `shpell compose`（stdout 被 `$(...)` 捕获，退出码 0 则写入
+   `READLINE_LINE`），并把第二个键绑成空宏吞掉。
+2. 交互结束后 handler 向终端发 `\e[5n`（设备状态查询），终端回应的
+   `\e[0n` 被绑定到 `redraw-current-line`，使 readline 在
+   `shpell compose` 留下的光标处重画 prompt —— 与 fzf 的重绘技巧相同。
+
+`READLINE_LINE` 自 bash 4.0 才有，脚本对 bash 3.x（macOS 系统自带）静默
+退化为不安装。
