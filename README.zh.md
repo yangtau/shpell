@@ -82,7 +82,7 @@ x86_64），解压后放进 `PATH` 即可。
 ```toml
 provider = "openai-chatgpt"   # 目前唯一支持的 provider
 model = "gpt-5.4-mini"
-reasoning_effort = "low"       # minimal | low | medium | high
+reasoning_effort = "low"       # none | low | medium | high | xhigh（随 model 而异）
 ```
 
 Shpell 模式的图标（纯 Unicode，任意字体可显示；`export` 后生效）：

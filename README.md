@@ -91,7 +91,7 @@ that request already submitted.
 ```toml
 provider = "openai-chatgpt"   # the only provider for now
 model = "gpt-5.4-mini"
-reasoning_effort = "low"       # minimal | low | medium | high
+reasoning_effort = "low"       # none | low | medium | high | xhigh (varies by model)
 ```
 
 Icons used in Shpell mode (plain Unicode, any font works; `export` them
