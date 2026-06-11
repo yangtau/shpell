@@ -1,6 +1,6 @@
 # shpell
 
-用自然语言写命令行命令。对 shell 念一句咒语（spell），它变出命令。
+**用自然语言写命令行命令。** 对 shell 念一句咒语（spell），它变出命令。
 
 ```
 ❯ create an empty file named test
@@ -17,6 +17,16 @@ m3 :: ~/.config ‹main*› » touch test
 - **继续输入** — 追问，基于上一条命令继续修改
 - **Ctrl-C / Ctrl-D** — 取消
 
+## 特性
+
+- **零打扰**：只在空行按 Tab 时触发，非空行的 Tab 仍是原来的补全
+  （兼容 fzf-tab 等插件）；生成的命令永远停在 prompt 上等你确认，不会自动执行
+- **流式生成**：命令边生成边显示，带 Claude Code 风格的 spinner 动画
+- **多轮追问**：命令不满意可以继续用自然语言修改，每轮基于上一条命令迭代
+- **用 ChatGPT 订阅**：OAuth 登录，无需 API key，不消耗 API 余额
+- **干净的实现**：交互完全在独立进程里完成，不经过 zle —— 自然语言永远不会
+  被 shell 解析、高亮或做 history expansion
+
 ## 安装
 
 ### Nix
@@ -32,7 +42,12 @@ nix profile install github:yangtau/shpell
 cargo install --path .
 ```
 
-## 配置
+### 预编译二进制
+
+从 [GitHub Releases](https://github.com/yangtau/shpell/releases) 下载对应平台的
+压缩包（Linux x86_64 / macOS arm64 / macOS x86_64），解压后放进 `PATH` 即可。
+
+## 快速开始
 
 1. 登录（使用 ChatGPT 订阅，OAuth，无需 API key）：
 
@@ -49,9 +64,14 @@ cargo install --path .
    eval "$(shpell init zsh)"
    ```
 
-### 可选配置
+3. 开新终端，空行按 Tab，开始用自然语言写命令。
 
-`~/.config/shpell/config.toml`：
+也可以不装 shell 集成直接用：`shpell gen -- "find large files"` 或
+`shpell find large files`。
+
+## 配置
+
+`~/.config/shpell/config.toml`（可选）：
 
 ```toml
 provider = "openai-chatgpt"   # 目前唯一支持的 provider
@@ -65,8 +85,6 @@ Shpell 模式的图标（纯 Unicode，任意字体可显示；`export` 后对 `
 |---|---|---|
 | `SHPELL_USER_ICON` | `❯` | Shpell 模式中用户输入行的图标 |
 | `SHPELL_AI_ICON` | `✻` | Shpell 模式中 AI 输出行的图标（生成完成后的静止态） |
-
-也可以不装 shell 集成直接用：`shpell gen -- "find large files"` 或 `shpell find large files`。
 
 ## 设计说明
 
@@ -113,3 +131,7 @@ spinner 也不会与 zle 重绘互相干扰。
 `shpell init <shell>` 输出对应 shell 的集成脚本，目前仅 zsh
 （`src/shell/shpell.zsh`）；新增 shell 在 `src/shell/` 加脚本并在
 `init_script` 注册即可。
+
+## License
+
+[MIT](LICENSE)
