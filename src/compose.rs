@@ -13,9 +13,11 @@
 
 use crate::config::Config;
 use crate::provider::{self, GenRequest, Provider};
-use anyhow::Result;
+use anyhow::{Context, Result};
 use rustyline::error::ReadlineError;
+use std::fs::File;
 use std::io::Write;
+use std::os::fd::FromRawFd;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -39,16 +41,29 @@ pub fn run(shell: &str, initial: Option<String>) -> Result<()> {
     eprint!("\r\x1b[K");
     let _ = std::io::stderr().flush();
 
+    // rustyline reads stdin (the widget attaches it to the tty) and paints
+    // on stdout — but stdout must stay a clean result channel for the widget
+    // to capture. So park the real stdout on a spare fd and point fd 1 at
+    // stderr (the tty) for the rest of the session; only the accepted
+    // command is written to the saved fd. Reading /dev/tty directly
+    // (Behavior::PreferTerm) is not an option: macOS poll(2) always reports
+    // POLLNVAL on /dev/tty, so rustyline never sees a lone Esc time out —
+    // it blocks and fuses Esc with the next key into a Meta chord.
+    let mut result_out = unsafe {
+        let saved = libc::dup(1);
+        if saved < 0 || libc::dup2(2, 1) < 0 {
+            return Err(std::io::Error::last_os_error()).context("shpell: cannot set up stdout");
+        }
+        File::from_raw_fd(saved)
+    };
+
     // rustyline provides real line editing for the query (arrow keys,
-    // bracketed paste, Up-arrow recall of earlier queries). PreferTerm makes
-    // it talk to /dev/tty directly, so stdout stays a clean result channel
-    // for the widget to capture.
+    // bracketed paste, Up-arrow recall of earlier queries).
     // keyseq_timeout lets a lone Esc press surface as a key instead of
     // waiting forever for the rest of an escape sequence (arrow keys still
     // work: their bytes arrive together, well within the timeout)
     let mut rl = rustyline::DefaultEditor::with_config(
         rustyline::Config::builder()
-            .behavior(rustyline::config::Behavior::PreferTerm)
             .keyseq_timeout(Some(25))
             .build(),
     )?;
@@ -85,7 +100,7 @@ pub fn run(shell: &str, initial: Option<String>) -> Result<()> {
                     if command.is_empty() {
                         std::process::exit(EXIT_CANCEL);
                     }
-                    println!("{command}");
+                    writeln!(result_out, "{command}")?;
                     return Ok(()); // exit 0: put it on the prompt
                 }
                 input
