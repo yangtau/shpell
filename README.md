@@ -54,8 +54,9 @@ cargo install --path .
 
 ### Prebuilt binaries
 
-Grab a tarball for your platform (Linux x86_64 / macOS arm64 / macOS x86_64)
-from [GitHub Releases](https://github.com/yangtau/shpell/releases) and drop
+Grab a tarball for your platform (Linux x86_64/arm64/armv7, all static
+musl builds; macOS arm64/x86_64) from
+[GitHub Releases](https://github.com/yangtau/shpell/releases) and drop
 the binary somewhere on your `PATH`.
 
 ## Quick start
