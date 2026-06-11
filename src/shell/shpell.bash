@@ -8,7 +8,7 @@
 #                   NOT run; you decide whether to run, edit or discard it.
 #                   The whole exchange stays on screen above the prompt
 #   more text       refine the command with a follow-up request
-#   Ctrl-C / Ctrl-D cancel
+#   Esc / Ctrl-C / Ctrl-D cancel
 #
 # bash cannot dispatch conditionally inside readline, so Tab is bound to a
 # two-key macro: the first key runs a `bind -x` handler which, on a non-empty

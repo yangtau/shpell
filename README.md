@@ -18,7 +18,7 @@ interactive UI that lives outside the zsh prompt. Type what you want after
   on your prompt, **not executed** — run it, edit it, or throw it away. The
   whole exchange stays on screen above the prompt
 - **Keep typing** — refine: ask a follow-up and the command is revised
-- **Ctrl-C / Ctrl-D** — cancel
+- **Esc / Ctrl-C / Ctrl-D** — cancel
 
 ## Demo
 

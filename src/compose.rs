@@ -9,7 +9,7 @@
 //!
 //!   0   put the command on the prompt — the user decides whether to run,
 //!       edit or discard it
-//!   1   cancel (also: Ctrl-C / Ctrl-D)
+//!   1   cancel (Esc / Ctrl-C / Ctrl-D)
 
 use crate::config::Config;
 use crate::provider::{self, GenRequest, Provider};
@@ -43,18 +43,27 @@ pub fn run(shell: &str) -> Result<()> {
     // bracketed paste, Up-arrow recall of earlier queries). PreferTerm makes
     // it talk to /dev/tty directly, so stdout stays a clean result channel
     // for the widget to capture.
+    // keyseq_timeout lets a lone Esc press surface as a key instead of
+    // waiting forever for the rest of an escape sequence (arrow keys still
+    // work: their bytes arrive together, well within the timeout)
     let mut rl = rustyline::DefaultEditor::with_config(
         rustyline::Config::builder()
             .behavior(rustyline::config::Behavior::PreferTerm)
+            .keyseq_timeout(Some(25))
             .build(),
     )?;
+    // Esc cancels, same as Ctrl-C
+    rl.bind_sequence(
+        rustyline::KeyEvent(rustyline::KeyCode::Esc, rustyline::Modifiers::NONE),
+        rustyline::Cmd::Interrupt,
+    );
 
     let mut command = String::new();
     let mut hinted = false;
     loop {
         let line = match rl.readline(&format!("{user_icon} ")) {
             Ok(l) => l,
-            // Ctrl-C / Ctrl-D
+            // Esc / Ctrl-C / Ctrl-D
             Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {
                 std::process::exit(EXIT_CANCEL)
             }
@@ -87,7 +96,7 @@ pub fn run(shell: &str) -> Result<()> {
                 command = cmd;
                 if !hinted {
                     hinted = true;
-                    eprintln!("\x1b[2m  ↵ accept · type to refine · ^C cancel\x1b[0m");
+                    eprintln!("\x1b[2m  ↵ accept · type to refine · esc cancel\x1b[0m");
                 }
             }
             Err(e) => eprintln!("\r\x1b[K\x1b[31mshpell: {e:#}\x1b[0m"),

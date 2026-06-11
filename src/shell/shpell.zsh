@@ -8,7 +8,7 @@
 #                   NOT run; you decide whether to run, edit or discard it.
 #                   The whole exchange stays on screen above the prompt
 #   more text       refine the command with a follow-up request
-#   Ctrl-C / Ctrl-D cancel
+#   Esc / Ctrl-C / Ctrl-D cancel
 #
 # Because input and streaming happen inside `shpell compose`, zle never sees
 # the natural-language text — no syntax-highlighting, history-expansion or PS2
