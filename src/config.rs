@@ -19,7 +19,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             provider: "openai-chatgpt".into(),
-            model: "gpt-5.2-codex".into(),
+            model: "gpt-5.4-mini".into(),
             reasoning_effort: "low".into(),
             base_instructions: "You are Codex, based on GPT-5. You are running as a coding \
                                 agent in the Codex CLI on a user's computer."

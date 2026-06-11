@@ -55,7 +55,7 @@ cargo install --path .
 
 ```toml
 provider = "openai-chatgpt"   # 目前唯一支持的 provider
-model = "gpt-5.2-codex"
+model = "gpt-5.4-mini"
 reasoning_effort = "low"       # minimal | low | medium | high
 ```
 
