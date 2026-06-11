@@ -72,8 +72,8 @@ x86_64），解压后放进 `PATH` 即可。
 
 3. 开新终端，空行按 Tab，开始用自然语言写命令。
 
-也可以不装 shell 集成直接用：`shpell gen -- "find large files"` 或
-`shpell find large files`。
+也可以不装 shell 集成直接用：直接运行 `shpell` 进入同样的 Shpell 交互模式；
+`shpell find large files`（`shpell gen ...` 的简写）单次生成一条命令。
 
 ## 配置
 

@@ -80,8 +80,9 @@ the binary somewhere on your `PATH`.
 3. Open a new terminal, hit Tab on an empty line, and write commands in plain
    language.
 
-You can also skip the shell integration entirely:
-`shpell gen -- "find large files"` or just `shpell find large files`.
+You can also skip the shell integration entirely: bare `shpell` opens the
+same interactive Shpell mode, and `shpell find large files` (shorthand for
+`shpell gen ...`) prints a one-shot command.
 
 ## Configuration
 

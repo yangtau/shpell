@@ -5,8 +5,9 @@ Guidance for AI coding agents working in this repository.
 ## Project
 
 `shpell` is a Rust CLI that turns natural language into shell commands. The
-binary is invoked two ways: directly (`shpell find large files`, shorthand for
-`shpell gen ...`) and via shell integrations (zsh, bash) that run
+binary is invoked three ways: bare `shpell` (opens interactive Shpell mode,
+i.e. `compose`), directly with text (`shpell find large files`, shorthand for
+`shpell gen ...`), and via shell integrations (zsh, bash) that run
 `shpell compose` when Tab is pressed on an empty prompt line.
 
 ## Commands
@@ -50,7 +51,8 @@ The core design is a **two-process split with a strict stdout contract**:
 Supporting modules:
 
 - `src/main.rs` — clap CLI. A bare first argument that is not a known
-  subcommand gets `gen` inserted in front of it (see `SUBCOMMANDS`).
+  subcommand gets `gen` inserted in front of it (see `SUBCOMMANDS`); no
+  arguments at all runs `compose`. `--shell` defaults derive from `$SHELL`.
 - `src/provider/` — `Provider` trait (`generate` with an `on_progress`
   streaming callback) plus `from_config` registry. The only implementation,
   `openai_chatgpt.rs`, calls `chatgpt.com/backend-api/codex/responses`

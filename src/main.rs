@@ -18,8 +18,8 @@ struct Cli {
 enum Cmd {
     /// Generate a shell command from a natural language description
     Gen {
-        /// Target shell the command will run in
-        #[arg(long, default_value = "zsh")]
+        /// Target shell the command will run in (defaults to $SHELL)
+        #[arg(long, default_value_t = detect_shell())]
         shell: String,
         /// Stream the command as it is generated, printing each growing
         /// snapshot on its own line; without it the final command is
@@ -31,10 +31,11 @@ enum Cmd {
         query: Vec<String>,
     },
     /// Interactive Shpell mode: type a request, watch the command stream in,
-    /// press Enter to accept (used by the shell integration's Tab binding)
+    /// press Enter to accept (used by the shell integration's Tab binding;
+    /// also what bare `shpell` runs)
     Compose {
-        /// Target shell the command will run in
-        #[arg(long, default_value = "zsh")]
+        /// Target shell the command will run in (defaults to $SHELL)
+        #[arg(long, default_value_t = detect_shell())]
         shell: String,
     },
     /// Manage LLM provider credentials
@@ -63,10 +64,23 @@ const SUBCOMMANDS: &[&str] = &[
     "gen", "compose", "auth", "init", "help", "-h", "--help", "-V", "--version",
 ];
 
+/// Best-effort shell detection for the `--shell` defaults: the basename of
+/// $SHELL, falling back to zsh.
+fn detect_shell() -> String {
+    std::env::var("SHELL")
+        .ok()
+        .and_then(|s| s.rsplit('/').next().map(str::to_string))
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| "zsh".into())
+}
+
 fn main() {
-    // `shpell <free text>` is shorthand for `shpell gen <free text>`.
+    // Bare `shpell` opens interactive Shpell mode; `shpell <free text>` is
+    // shorthand for `shpell gen <free text>`.
     let mut args: Vec<String> = std::env::args().collect();
-    if args.len() > 1 && !SUBCOMMANDS.contains(&args[1].as_str()) {
+    if args.len() == 1 {
+        args.push("compose".into());
+    } else if !SUBCOMMANDS.contains(&args[1].as_str()) {
         args.insert(1, "gen".into());
     }
     let cli = Cli::parse_from(args);
