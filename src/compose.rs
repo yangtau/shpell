@@ -29,7 +29,7 @@ fn icon(var: &str, default: &str) -> String {
     std::env::var(var).unwrap_or_else(|_| default.into())
 }
 
-pub fn run(shell: &str) -> Result<()> {
+pub fn run(shell: &str, initial: Option<String>) -> Result<()> {
     let cfg = Config::load()?;
     let provider = provider::from_config(&cfg)?;
     let user_icon = icon("SHPELL_USER_ICON", "❯");
@@ -60,23 +60,38 @@ pub fn run(shell: &str) -> Result<()> {
 
     let mut command = String::new();
     let mut hinted = false;
+    // a request passed on the command line is submitted as the first turn
+    let mut pending = initial
+        .map(|q| q.trim().to_string())
+        .filter(|q| !q.is_empty());
     loop {
-        let line = match rl.readline(&format!("{user_icon} ")) {
-            Ok(l) => l,
-            // Esc / Ctrl-C / Ctrl-D
-            Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {
-                std::process::exit(EXIT_CANCEL)
+        let input = match pending.take() {
+            Some(q) => {
+                // echo it where the typed query would have appeared
+                eprintln!("{user_icon} {q}");
+                q
             }
-            Err(e) => return Err(e.into()),
+            None => {
+                let line = match rl.readline(&format!("{user_icon} ")) {
+                    Ok(l) => l,
+                    // Esc / Ctrl-C / Ctrl-D
+                    Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {
+                        std::process::exit(EXIT_CANCEL)
+                    }
+                    Err(e) => return Err(e.into()),
+                };
+                let input = line.trim().to_string();
+                if input.is_empty() {
+                    if command.is_empty() {
+                        std::process::exit(EXIT_CANCEL);
+                    }
+                    println!("{command}");
+                    return Ok(()); // exit 0: put it on the prompt
+                }
+                input
+            }
         };
-        let input = line.trim();
-        if input.is_empty() {
-            if command.is_empty() {
-                std::process::exit(EXIT_CANCEL);
-            }
-            println!("{command}");
-            return Ok(()); // exit 0: put it on the prompt
-        }
+        let input = input.as_str();
         let _ = rl.add_history_entry(input);
         let query = if command.is_empty() {
             input.to_string()

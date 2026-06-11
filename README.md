@@ -81,8 +81,8 @@ the binary somewhere on your `PATH`.
    language.
 
 You can also skip the shell integration entirely: bare `shpell` opens the
-same interactive Shpell mode, and `shpell find large files` prints a
-one-shot command.
+same interactive Shpell mode, and `shpell find large files` enters it with
+that request already submitted.
 
 ## Configuration
 

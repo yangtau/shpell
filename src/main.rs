@@ -32,11 +32,14 @@ enum Cmd {
     },
     /// Interactive Shpell mode: type a request, watch the command stream in,
     /// press Enter to accept (used by the shell integration's Tab binding;
-    /// also what bare `shpell` runs)
+    /// also what `shpell [request]` runs)
     Compose {
         /// Target shell the command will run in (defaults to $SHELL)
         #[arg(long, default_value_t = detect_shell())]
         shell: String,
+        /// Optional first request, submitted immediately on entry
+        #[arg(num_args = 0.., trailing_var_arg = true)]
+        query: Vec<String>,
     },
     /// Manage LLM provider credentials
     Auth {
@@ -75,13 +78,12 @@ fn detect_shell() -> String {
 }
 
 fn main() {
-    // Bare `shpell` opens interactive Shpell mode; `shpell <free text>` is
-    // shorthand for `shpell gen <free text>`.
+    // `shpell [free text]` opens interactive Shpell mode, the free text (if
+    // any) submitted as the first request. `gen` stays the explicit
+    // non-interactive entry point for scripts.
     let mut args: Vec<String> = std::env::args().collect();
-    if args.len() == 1 {
-        args.push("compose".into());
-    } else if !SUBCOMMANDS.contains(&args[1].as_str()) {
-        args.insert(1, "gen".into());
+    if args.len() == 1 || !SUBCOMMANDS.contains(&args[1].as_str()) {
+        args.insert(1, "compose".into());
     }
     let cli = Cli::parse_from(args);
     if let Err(e) = run(cli) {
@@ -127,7 +129,10 @@ fn run(cli: Cli) -> Result<()> {
                 println!("{command}");
             }
         }
-        Cmd::Compose { shell } => compose::run(&shell)?,
+        Cmd::Compose { shell, query } => {
+            let initial = (!query.is_empty()).then(|| query.join(" "));
+            compose::run(&shell, initial)?
+        }
         Cmd::Auth { cmd } => match cmd {
             AuthCmd::Login => auth::login()?,
             AuthCmd::Logout => auth::logout()?,
