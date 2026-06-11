@@ -8,7 +8,8 @@ pub struct Config {
     /// LLM provider id. Supported: "openai-chatgpt".
     pub provider: String,
     pub model: String,
-    /// Reasoning effort for reasoning models: minimal | low | medium | high.
+    /// Reasoning effort for reasoning models, e.g. none | low | medium |
+    /// high | xhigh — the accepted set varies by model.
     pub reasoning_effort: String,
     /// The ChatGPT codex backend expects Codex-style base instructions; the
     /// task-specific prompt is sent as a developer message instead.
