@@ -17,15 +17,11 @@ struct Cli {
 #[derive(Subcommand)]
 enum Cmd {
     /// Generate a shell command from a natural language description
+    /// (non-interactive, for scripting)
     Gen {
         /// Target shell the command will run in (defaults to $SHELL)
         #[arg(long, default_value_t = detect_shell())]
         shell: String,
-        /// Stream the command as it is generated, printing each growing
-        /// snapshot on its own line; without it the final command is
-        /// printed once
-        #[arg(long)]
-        stream: bool,
         /// Natural language description of the command
         #[arg(required = true, num_args = 1.., trailing_var_arg = true)]
         query: Vec<String>,
@@ -94,12 +90,7 @@ fn main() {
 
 fn run(cli: Cli) -> Result<()> {
     match cli.cmd {
-        Cmd::Gen {
-            shell,
-            stream,
-            query,
-        } => {
-            use std::io::Write;
+        Cmd::Gen { shell, query } => {
             let cfg = config::Config::load()?;
             let provider = provider::from_config(&cfg)?;
             let req = provider::GenRequest {
@@ -110,24 +101,8 @@ fn run(cli: Cli) -> Result<()> {
                     .map(|p| p.display().to_string())
                     .unwrap_or_default(),
             };
-            // When streaming, emit each new snapshot as a line so the shell
-            // can redraw the buffer live; dedupe identical consecutive ones.
-            let mut last = String::new();
-            let command = {
-                let mut on_progress = |snapshot: &str| {
-                    if stream && snapshot != last {
-                        last = snapshot.to_string();
-                        let mut out = std::io::stdout().lock();
-                        let _ = writeln!(out, "{snapshot}");
-                        let _ = out.flush();
-                    }
-                };
-                provider.generate(&req, &mut on_progress)?
-            };
-            // Always make the final command the last line emitted.
-            if !stream || command != last {
-                println!("{command}");
-            }
+            let command = provider.generate(&req, &mut |_| {})?;
+            println!("{command}");
         }
         Cmd::Compose { shell, query } => {
             let initial = (!query.is_empty()).then(|| query.join(" "));
