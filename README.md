@@ -42,7 +42,7 @@ interactive UI that lives outside the zsh prompt. Type what you want after
 ### Nix
 
 ```sh
-nix profile install github:yangtau/shpell
+nix profile add github:yangtau/shpell
 # or in a flake: inputs.shpell.url = "github:yangtau/shpell";
 ```
 

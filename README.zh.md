@@ -36,7 +36,7 @@ m3 :: ~/.config ‹main*› » touch test
 ### Nix
 
 ```sh
-nix profile install github:yangtau/shpell
+nix profile add github:yangtau/shpell
 # 或在 flake 中引用 inputs.shpell.url = "github:yangtau/shpell";
 ```
 
