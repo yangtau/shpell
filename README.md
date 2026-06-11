@@ -81,8 +81,8 @@ the binary somewhere on your `PATH`.
    language.
 
 You can also skip the shell integration entirely: bare `shpell` opens the
-same interactive Shpell mode, and `shpell find large files` (shorthand for
-`shpell gen ...`) prints a one-shot command.
+same interactive Shpell mode, and `shpell find large files` prints a
+one-shot command.
 
 ## Configuration
 
@@ -105,7 +105,7 @@ before use):
 ## Design
 
 Curious why it triggers via Tab instead of a prefix word, or how the shell
-integration and the `shpell compose` process split the work? See
+integration and the interactive process split the work? See
 [docs/design.md](docs/design.md) (Chinese).
 
 ## License
