@@ -39,8 +39,8 @@ The core design is a **two-process split with a strict stdout contract**:
   stdout carries only the final accepted command.** Breaking this contract
   breaks the zsh integration. Natural-language text deliberately never enters
   zle, so it is never shell-parsed, highlighted, or history-expanded — the
-  README's design notes list previously attempted and abandoned approaches;
-  read them before proposing a different trigger mechanism.
+  `docs/design.md` lists previously attempted and abandoned approaches;
+  read it before proposing a different trigger mechanism.
 - Multi-turn refinement is stateless on the provider side: each follow-up is
   sent as "Previously generated command: `...`. Revise it per this request: ...".
 
@@ -67,8 +67,9 @@ Supporting modules:
 - Commit messages: single-line conventional commits
   (`feat(compose): ...`, `refactor: ...`), present tense, lowercase.
 - User-facing strings and error prefixes use the binary name `shpell`.
-- README is in Chinese and doubles as the design document; keep its
-  design-notes section in sync with behavioral changes (exit codes,
+- User-facing docs come in two languages — `README.md` (English) and
+  `README.zh.md` (Chinese) — keep them in sync. Design rationale lives in
+  `docs/design.md` (Chinese); update it when behavior changes (exit codes,
   keybindings, interaction flow).
 - CI (`.github/workflows/ci.yml`) builds release artifacts for
   linux-musl/macOS on every push to main; a `v*` tag also publishes a GitHub

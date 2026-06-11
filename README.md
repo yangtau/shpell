@@ -1,6 +1,7 @@
 # shpell
 
-**用自然语言写命令行命令。** 对 shell 念一句咒语（spell），它变出命令。
+**Write shell commands in natural language.** Cast a spell at your shell, and
+it conjures the command.
 
 ```
 ❯ create an empty file named test
@@ -8,32 +9,41 @@
 m3 :: ~/.config ‹main*› » touch test
 ```
 
-在 zsh 里空行按 **Tab** 进入 Shpell 模式（一个独立于 zsh prompt 的交互界面）：
-在 ❯ 后输入自然语言（支持方向键、粘贴、↑ 回溯本轮历史），生成的命令在 ✻
-后流式出现，生成期间 ✻ 像 Claude Code 一样脉冲闪动（✢ ✳ ✶ ✻ ✽）。然后：
+Press **Tab** on an empty line in zsh to enter Shpell mode — a small
+interactive UI that lives outside the zsh prompt. Type what you want after
+`❯` (arrow keys, paste and ↑-recall all work); the command streams in after
+`✻`, which pulses while generating. Then:
 
-- **空行回车** — 接受：回到 zsh，命令放到 prompt 上但**不执行**，由你决定
-  运行、修改还是丢弃；整段对话保留在屏幕上
-- **继续输入** — 追问，基于上一条命令继续修改
-- **Ctrl-C / Ctrl-D** — 取消
+- **Enter on an empty line** — accept: back to zsh with the command sitting
+  on your prompt, **not executed** — run it, edit it, or throw it away. The
+  whole exchange stays on screen above the prompt
+- **Keep typing** — refine: ask a follow-up and the command is revised
+- **Ctrl-C / Ctrl-D** — cancel
 
-## 特性
+## Demo
 
-- **零打扰**：只在空行按 Tab 时触发，非空行的 Tab 仍是原来的补全
-  （兼容 fzf-tab 等插件）；生成的命令永远停在 prompt 上等你确认，不会自动执行
-- **流式生成**：命令边生成边显示，带 Claude Code 风格的 spinner 动画
-- **多轮追问**：命令不满意可以继续用自然语言修改，每轮基于上一条命令迭代
-- **用 ChatGPT 订阅**：OAuth 登录，无需 API key，不消耗 API 余额
-- **干净的实现**：交互完全在独立进程里完成，不经过 zle —— 自然语言永远不会
-  被 shell 解析、高亮或做 history expansion
+> **TODO(@yangtau):** record a short demo video / GIF and embed it here.
 
-## 安装
+## Highlights
+
+- **Zero interference** — only triggers on Tab at an empty line; Tab anywhere
+  else is still your regular completion (plays nice with fzf-tab etc.), and a
+  generated command never runs without your confirmation
+- **Streaming UI** — commands appear as they are generated, with a Claude
+  Code-style pulsing spinner
+- **Multi-turn refinement** — not quite right? Just say what to change
+- **Uses your ChatGPT subscription** — OAuth login, no API key, no API credits
+- **Clean by construction** — the interaction runs in its own process, never
+  through zle, so your natural language is never shell-parsed, highlighted or
+  history-expanded
+
+## Install
 
 ### Nix
 
 ```sh
 nix profile install github:yangtau/shpell
-# 或在 flake 中引用 inputs.shpell.url = "github:yangtau/shpell";
+# or in a flake: inputs.shpell.url = "github:yangtau/shpell";
 ```
 
 ### Cargo
@@ -42,96 +52,63 @@ nix profile install github:yangtau/shpell
 cargo install --path .
 ```
 
-### 预编译二进制
+### Prebuilt binaries
 
-从 [GitHub Releases](https://github.com/yangtau/shpell/releases) 下载对应平台的
-压缩包（Linux x86_64 / macOS arm64 / macOS x86_64），解压后放进 `PATH` 即可。
+Grab a tarball for your platform (Linux x86_64 / macOS arm64 / macOS x86_64)
+from [GitHub Releases](https://github.com/yangtau/shpell/releases) and drop
+the binary somewhere on your `PATH`.
 
-## 快速开始
+## Quick start
 
-1. 登录（使用 ChatGPT 订阅，OAuth，无需 API key）：
+1. Log in with your ChatGPT subscription (OAuth, no API key):
 
    ```sh
    shpell auth login
    ```
 
-   会打印一个登录 URL，在浏览器中完成授权即可（回调监听本机 1455 端口，
-   与 Codex CLI / openclaw 相同的方式）。
+   This prints a login URL; finish authorization in the browser (the callback
+   listens on localhost:1455, same mechanism as the Codex CLI).
 
-2. 在 `~/.zshrc` 末尾加入：
+2. Add to the end of `~/.zshrc`:
 
    ```sh
    eval "$(shpell init zsh)"
    ```
 
-3. 开新终端，空行按 Tab，开始用自然语言写命令。
+3. Open a new terminal, hit Tab on an empty line, and write commands in plain
+   language.
 
-也可以不装 shell 集成直接用：`shpell gen -- "find large files"` 或
-`shpell find large files`。
+You can also skip the shell integration entirely:
+`shpell gen -- "find large files"` or just `shpell find large files`.
 
-## 配置
+## Configuration
 
-`~/.config/shpell/config.toml`（可选）：
+`~/.config/shpell/config.toml` (optional):
 
 ```toml
-provider = "openai-chatgpt"   # 目前唯一支持的 provider
+provider = "openai-chatgpt"   # the only provider for now
 model = "gpt-5.4-mini"
 reasoning_effort = "low"       # minimal | low | medium | high
 ```
 
-Shpell 模式的图标（纯 Unicode，任意字体可显示；`export` 后对 `shpell compose` 生效）：
+Icons used in Shpell mode (plain Unicode, any font works; `export` them
+before use):
 
-| 变量 | 默认 | 说明 |
+| Variable | Default | Meaning |
 |---|---|---|
-| `SHPELL_USER_ICON` | `❯` | Shpell 模式中用户输入行的图标 |
-| `SHPELL_AI_ICON` | `✻` | Shpell 模式中 AI 输出行的图标（生成完成后的静止态） |
+| `SHPELL_USER_ICON` | `❯` | icon for your input line |
+| `SHPELL_AI_ICON` | `✻` | icon for the generated command (resting state) |
 
-## 设计说明
+## Design
 
-### 触发方式：空行 Tab + 独立的 Shpell 模式 UI
-
-zsh 集成（`src/shell/shpell.zsh`）只做一件事：空行按 Tab 时挂起 zle，以
-fzf-widget 的方式启动 `shpell compose`（stdin/stderr 接 tty，stdout 被捕获），
-结束后按退出码处理 —— `0` 把命令放上 prompt（不执行，由用户决定下一步），
-其余取消。非空行的 Tab 委派给原有补全 widget（兼容 fzf-tab 等）。
-
-整个交互界面（图标、流式输出、spinner 动画、追问循环）都在 `shpell compose`
-（`src/compose.rs`）里完成，**完全不经过 zle**。自然语言从不接触 shell
-解析，因此没有语法高亮误判、history expansion（`!`）、PS2 续行这些问题；
-spinner 也不会与 zle 重绘互相干扰。
-
-之前迭代过并放弃的方案：
-
-- **前缀词触发（`x ` / `@`）+ 重载 `accept-line`**：自然语言留在 zle buffer
-  里，`?` `>` `$` 会被语法高亮插件按 shell 语义涂色，需要额外 hook 覆盖
-  高亮；流式重绘、spinner（`zle -M`）与 zle 显示机制纠缠，边界问题多。
-- **`!` 前缀**：与 history expansion 冲突。
-- **`#` 前缀**：需 `interactive_comments`，且整行被高亮成注释。
-- **无前缀自然语言分类**：误判会拦截正常命令，每次回车都有延迟。
-
-### Provider 抽象
-
-`src/provider/mod.rs` 定义 `Provider` trait（输入自然语言 + shell/os/cwd 上下文，
-输出单行命令），由 `config.toml` 的 `provider` 字段选择实现。目前唯一实现
-`openai-chatgpt`：
-
-- 认证走 OpenAI 官方 Codex 公共客户端的 OAuth PKCE 流程
-  （`auth.openai.com`，本机 1455 回调），即 openclaw / opencode 接 ChatGPT
-  订阅的同一套机制，token 存于 `~/.local/share/shpell/auth.json`（0600），
-  过期前自动 refresh。
-- 请求打到 `chatgpt.com/backend-api/codex/responses`（Responses API、
-  SSE-only、`store: false`，需 `ChatGPT-Account-Id` header），按订阅计费，
-  不消耗 API 余额。
-
-新增 provider（如 Anthropic、本地模型）只需实现 trait 并在
-`provider::from_config` 注册。
-
-### Shell 拓展
-
-`shpell init <shell>` 输出对应 shell 的集成脚本，目前仅 zsh
-（`src/shell/shpell.zsh`）；新增 shell 在 `src/shell/` 加脚本并在
-`init_script` 注册即可。
+Curious why it triggers via Tab instead of a prefix word, or how the zsh
+widget and the `shpell compose` process split the work? See
+[docs/design.md](docs/design.md) (Chinese).
 
 ## License
 
 [MIT](LICENSE)
+
+---
+
+中文文档：[README.zh.md](README.zh.md)
