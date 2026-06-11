@@ -1,5 +1,5 @@
 {
-  description = "x: write shell commands in natural language";
+  description = "shpell: write shell commands in natural language";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
@@ -10,17 +10,17 @@
     in
     {
       packages = forAllSystems (pkgs: rec {
-        x = pkgs.rustPlatform.buildRustPackage {
-          pname = "x";
+        shpell = pkgs.rustPlatform.buildRustPackage {
+          pname = "shpell";
           version = "0.1.0";
           src = self;
           cargoLock.lockFile = ./Cargo.lock;
           meta = {
             description = "Write shell commands in natural language";
-            mainProgram = "x";
+            mainProgram = "shpell";
           };
         };
-        default = x;
+        default = shpell;
       });
 
       devShells = forAllSystems (pkgs: {

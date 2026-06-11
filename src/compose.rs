@@ -1,6 +1,6 @@
-//! Interactive "X mode": a chat-style loop run on the user's terminal.
+//! Interactive "Shpell mode": a chat-style loop run on the user's terminal.
 //!
-//! The zsh widget launches `x compose` with stdin and stderr attached to the
+//! The zsh widget launches `shpell compose` with stdin and stderr attached to the
 //! tty and captures stdout. All UI (icons, streaming, spinner) is drawn on
 //! stderr, completely outside zle — so the natural-language text never meets
 //! shell parsing, syntax highlighting or history expansion. The only thing
@@ -33,8 +33,8 @@ fn icon(var: &str, default: &str) -> String {
 pub fn run(shell: &str) -> Result<()> {
     let cfg = Config::load()?;
     let provider = provider::from_config(&cfg)?;
-    let user_icon = icon("X_USER_ICON", "❯");
-    let ai_icon = icon("X_AI_ICON", "✻");
+    let user_icon = icon("SHPELL_USER_ICON", "❯");
+    let ai_icon = icon("SHPELL_AI_ICON", "✻");
 
     // take over the line the zsh prompt was sitting on
     eprint!("\r\x1b[K");
@@ -95,7 +95,7 @@ pub fn run(shell: &str) -> Result<()> {
                     eprintln!("\x1b[2m  ↵ run · e edit · type to refine · ^C cancel\x1b[0m");
                 }
             }
-            Err(e) => eprintln!("\r\x1b[K\x1b[31mx: {e:#}\x1b[0m"),
+            Err(e) => eprintln!("\r\x1b[K\x1b[31mshpell: {e:#}\x1b[0m"),
         }
     }
 }

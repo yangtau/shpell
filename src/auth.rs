@@ -41,7 +41,7 @@ fn now() -> u64 {
 
 fn auth_path() -> Result<PathBuf> {
     let dir = dirs::data_dir().context("cannot locate data directory")?;
-    Ok(dir.join("x").join("auth.json"))
+    Ok(dir.join("shpell").join("auth.json"))
 }
 
 fn save(tokens: &Tokens) -> Result<()> {
@@ -59,7 +59,7 @@ fn save(tokens: &Tokens) -> Result<()> {
 fn load() -> Result<Tokens> {
     let path = auth_path()?;
     let raw = std::fs::read(&path)
-        .map_err(|_| anyhow!("not logged in, run `x auth login` first"))?;
+        .map_err(|_| anyhow!("not logged in, run `shpell auth login` first"))?;
     Ok(serde_json::from_slice(&raw)?)
 }
 
@@ -211,7 +211,7 @@ pub fn access() -> Result<(String, String)> {
             .send()
             .context("token refresh request failed")?
             .error_for_status()
-            .context("token refresh rejected, run `x auth login` again")?
+            .context("token refresh rejected, run `shpell auth login` again")?
             .json()?;
         tokens.expires_at = now() + resp.expires_in.unwrap_or(3600);
         tokens.access_token = resp.access_token;
@@ -246,7 +246,7 @@ pub fn status() -> Result<()> {
                 }
             );
         }
-        Err(_) => eprintln!("Not logged in. Run `x auth login`."),
+        Err(_) => eprintln!("Not logged in. Run `shpell auth login`."),
     }
     Ok(())
 }

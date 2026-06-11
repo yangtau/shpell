@@ -38,7 +38,7 @@ impl Config {
             .filter(|p| p.is_absolute())
             .or_else(|| dirs::home_dir().map(|h| h.join(".config")))
             .context("cannot locate config directory")?;
-        Ok(dir.join("x").join("config.toml"))
+        Ok(dir.join("shpell").join("config.toml"))
     }
 
     pub fn load() -> Result<Self> {

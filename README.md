@@ -1,6 +1,6 @@
-# x
+# shpell
 
-用自然语言写命令行命令。
+用自然语言写命令行命令。对 shell 念一句咒语（spell），它变出命令。
 
 ```
 ❯ create an empty file named test
@@ -8,7 +8,7 @@
 m3 :: ~/.config ‹main*› » touch test
 ```
 
-在 zsh 里空行按 **Tab** 进入 X 模式（一个独立于 zsh prompt 的交互界面）：
+在 zsh 里空行按 **Tab** 进入 Shpell 模式（一个独立于 zsh prompt 的交互界面）：
 在 ❯ 后输入自然语言（支持方向键、粘贴、↑ 回溯本轮历史），生成的命令在 ✻
 后流式出现，生成期间 ✻ 像 Claude Code 一样脉冲闪动（✢ ✳ ✶ ✻ ✽）。然后：
 
@@ -22,8 +22,8 @@ m3 :: ~/.config ‹main*› » touch test
 ### Nix
 
 ```sh
-nix profile install github:yangtau/x
-# 或在 flake 中引用 inputs.x.url = "github:yangtau/x";
+nix profile install github:yangtau/shpell
+# 或在 flake 中引用 inputs.shpell.url = "github:yangtau/shpell";
 ```
 
 ### Cargo
@@ -37,7 +37,7 @@ cargo install --path .
 1. 登录（使用 ChatGPT 订阅，OAuth，无需 API key）：
 
    ```sh
-   x auth login
+   shpell auth login
    ```
 
    会打印一个登录 URL，在浏览器中完成授权即可（回调监听本机 1455 端口，
@@ -46,12 +46,12 @@ cargo install --path .
 2. 在 `~/.zshrc` 末尾加入：
 
    ```sh
-   eval "$(x init zsh)"
+   eval "$(shpell init zsh)"
    ```
 
 ### 可选配置
 
-`~/.config/x/config.toml`：
+`~/.config/shpell/config.toml`：
 
 ```toml
 provider = "openai-chatgpt"   # 目前唯一支持的 provider
@@ -59,25 +59,25 @@ model = "gpt-5.2-codex"
 reasoning_effort = "low"       # minimal | low | medium | high
 ```
 
-X 模式的图标（纯 Unicode，任意字体可显示；`export` 后对 `x compose` 生效）：
+Shpell 模式的图标（纯 Unicode，任意字体可显示；`export` 后对 `shpell compose` 生效）：
 
 | 变量 | 默认 | 说明 |
 |---|---|---|
-| `X_USER_ICON` | `❯` | X 模式中用户输入行的图标 |
-| `X_AI_ICON` | `✻` | X 模式中 AI 输出行的图标（生成完成后的静止态） |
+| `SHPELL_USER_ICON` | `❯` | Shpell 模式中用户输入行的图标 |
+| `SHPELL_AI_ICON` | `✻` | Shpell 模式中 AI 输出行的图标（生成完成后的静止态） |
 
-也可以不装 shell 集成直接用：`x gen -- "find large files"` 或 `x find large files`。
+也可以不装 shell 集成直接用：`shpell gen -- "find large files"` 或 `shpell find large files`。
 
 ## 设计说明
 
-### 触发方式：空行 Tab + 独立的 X 模式 UI
+### 触发方式：空行 Tab + 独立的 Shpell 模式 UI
 
-zsh 集成（`src/shell/x.zsh`）只做一件事：空行按 Tab 时挂起 zle，以
-fzf-widget 的方式启动 `x compose`（stdin/stderr 接 tty，stdout 被捕获），
+zsh 集成（`src/shell/shpell.zsh`）只做一件事：空行按 Tab 时挂起 zle，以
+fzf-widget 的方式启动 `shpell compose`（stdin/stderr 接 tty，stdout 被捕获），
 结束后按退出码处理 —— `0` 把命令放上 prompt 并执行，`10` 只放上 prompt
 供编辑，其余取消。非空行的 Tab 委派给原有补全 widget（兼容 fzf-tab 等）。
 
-整个交互界面（图标、流式输出、spinner 动画、追问循环）都在 `x compose`
+整个交互界面（图标、流式输出、spinner 动画、追问循环）都在 `shpell compose`
 （`src/compose.rs`）里完成，**完全不经过 zle**。自然语言从不接触 shell
 解析，因此没有语法高亮误判、history expansion（`!`）、PS2 续行这些问题；
 spinner 也不会与 zle 重绘互相干扰。
@@ -99,7 +99,7 @@ spinner 也不会与 zle 重绘互相干扰。
 
 - 认证走 OpenAI 官方 Codex 公共客户端的 OAuth PKCE 流程
   （`auth.openai.com`，本机 1455 回调），即 openclaw / opencode 接 ChatGPT
-  订阅的同一套机制，token 存于 `~/.local/share/x/auth.json`（0600），
+  订阅的同一套机制，token 存于 `~/.local/share/shpell/auth.json`（0600），
   过期前自动 refresh。
 - 请求打到 `chatgpt.com/backend-api/codex/responses`（Responses API、
   SSE-only、`store: false`，需 `ChatGPT-Account-Id` header），按订阅计费，
@@ -110,6 +110,6 @@ spinner 也不会与 zle 重绘互相干扰。
 
 ### Shell 拓展
 
-`x init <shell>` 输出对应 shell 的集成脚本，目前仅 zsh
-（`src/shell/x.zsh`）；新增 shell 在 `src/shell/` 加脚本并在
+`shpell init <shell>` 输出对应 shell 的集成脚本，目前仅 zsh
+（`src/shell/shpell.zsh`）；新增 shell 在 `src/shell/` 加脚本并在
 `init_script` 注册即可。

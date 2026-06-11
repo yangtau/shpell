@@ -8,7 +8,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "x", version, about = "Write shell commands in natural language")]
+#[command(name = "shpell", version, about = "Write shell commands in natural language")]
 struct Cli {
     #[command(subcommand)]
     cmd: Cmd,
@@ -30,7 +30,7 @@ enum Cmd {
         #[arg(required = true, num_args = 1.., trailing_var_arg = true)]
         query: Vec<String>,
     },
-    /// Interactive X mode: type a request, watch the command stream in,
+    /// Interactive Shpell mode: type a request, watch the command stream in,
     /// press Enter to accept (used by the zsh integration's Tab binding)
     Compose {
         /// Target shell the command will run in
@@ -42,7 +42,7 @@ enum Cmd {
         #[command(subcommand)]
         cmd: AuthCmd,
     },
-    /// Print the shell integration script (e.g. `eval "$(x init zsh)"`)
+    /// Print the shell integration script (e.g. `eval "$(shpell init zsh)"`)
     Init {
         /// Shell to integrate with (currently only: zsh)
         shell: String,
@@ -64,14 +64,14 @@ const SUBCOMMANDS: &[&str] = &[
 ];
 
 fn main() {
-    // `x <free text>` is shorthand for `x gen <free text>`.
+    // `shpell <free text>` is shorthand for `shpell gen <free text>`.
     let mut args: Vec<String> = std::env::args().collect();
     if args.len() > 1 && !SUBCOMMANDS.contains(&args[1].as_str()) {
         args.insert(1, "gen".into());
     }
     let cli = Cli::parse_from(args);
     if let Err(e) = run(cli) {
-        eprintln!("x: {e:#}");
+        eprintln!("shpell: {e:#}");
         std::process::exit(1);
     }
 }

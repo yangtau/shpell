@@ -1,5 +1,5 @@
 [package]
-name = "x"
+name = "shpell"
 version = "0.1.0"
 edition = "2021"
 description = "Write shell commands in natural language"

@@ -1,6 +1,6 @@
 //! Provider backed by a ChatGPT subscription via the codex backend
 //! (`chatgpt.com/backend-api/codex/responses`), authenticated with the
-//! OAuth tokens from `x auth login`. No per-token API billing.
+//! OAuth tokens from `shpell auth login`. No per-token API billing.
 
 use super::{GenRequest, Provider};
 use crate::auth;
