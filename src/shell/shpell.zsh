@@ -4,10 +4,10 @@
 # `shpell compose`, entirely outside zle. Type a request after the ❯ prompt;
 # the generated command streams in after the ✻ icon, which pulses while
 # generating. Then:
-#   Enter (empty)   accept — back to zsh, the command lands on the prompt
-#                   and runs; the whole exchange stays on screen above it
+#   Enter (empty)   accept — back to zsh with the command on the prompt,
+#                   NOT run; you decide whether to run, edit or discard it.
+#                   The whole exchange stays on screen above the prompt
 #   more text       refine the command with a follow-up request
-#   e               back to zsh with the command on the prompt, NOT run
 #   Ctrl-C / Ctrl-D cancel
 #
 # Because input and streaming happen inside `shpell compose`, zle never sees
@@ -42,13 +42,7 @@ _shpell_compose() {
     [[ -n $ttysave ]] && stty "$ttysave" < /dev/tty 2>/dev/null
   }
   case $rc in
-    0)   # accepted: put the command on the prompt and run it
-      BUFFER=$out
-      CURSOR=$#BUFFER
-      zle reset-prompt
-      [[ -n $out ]] && zle .accept-line
-      ;;
-    10)  # edit: leave the command on the prompt for review
+    0)   # accepted: leave the command on the prompt; the user runs it
       BUFFER=$out
       CURSOR=$#BUFFER
       zle reset-prompt

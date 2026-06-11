@@ -12,9 +12,9 @@ m3 :: ~/.config ‹main*› » touch test
 在 ❯ 后输入自然语言（支持方向键、粘贴、↑ 回溯本轮历史），生成的命令在 ✻
 后流式出现，生成期间 ✻ 像 Claude Code 一样脉冲闪动（✢ ✳ ✶ ✻ ✽）。然后：
 
-- **空行回车** — 接受：回到 zsh，命令上屏并执行，整段对话保留在屏幕上
+- **空行回车** — 接受：回到 zsh，命令放到 prompt 上但**不执行**，由你决定
+  运行、修改还是丢弃；整段对话保留在屏幕上
 - **继续输入** — 追问，基于上一条命令继续修改
-- **`e`** — 回到 zsh，命令放在 prompt 上供编辑，不执行
 - **Ctrl-C / Ctrl-D** — 取消
 
 ## 安装
@@ -74,8 +74,8 @@ Shpell 模式的图标（纯 Unicode，任意字体可显示；`export` 后对 `
 
 zsh 集成（`src/shell/shpell.zsh`）只做一件事：空行按 Tab 时挂起 zle，以
 fzf-widget 的方式启动 `shpell compose`（stdin/stderr 接 tty，stdout 被捕获），
-结束后按退出码处理 —— `0` 把命令放上 prompt 并执行，`10` 只放上 prompt
-供编辑，其余取消。非空行的 Tab 委派给原有补全 widget（兼容 fzf-tab 等）。
+结束后按退出码处理 —— `0` 把命令放上 prompt（不执行，由用户决定下一步），
+其余取消。非空行的 Tab 委派给原有补全 widget（兼容 fzf-tab 等）。
 
 整个交互界面（图标、流式输出、spinner 动画、追问循环）都在 `shpell compose`
 （`src/compose.rs`）里完成，**完全不经过 zle**。自然语言从不接触 shell

@@ -7,8 +7,8 @@
 //! ever written to stdout is the accepted command, and the exit code tells
 //! the widget what to do with it:
 //!
-//!   0   run the command
-//!   10  put it on the prompt for editing
+//!   0   put the command on the prompt — the user decides whether to run,
+//!       edit or discard it
 //!   1   cancel (also: Ctrl-C / Ctrl-D)
 
 use crate::config::Config;
@@ -20,7 +20,6 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-const EXIT_EDIT: i32 = 10;
 const EXIT_CANCEL: i32 = 1;
 // Claude Code-style pulsing sparkle, shown in place of the AI icon while
 // generating (ping-pong order so the pulse breathes instead of jumping)
@@ -67,11 +66,7 @@ pub fn run(shell: &str) -> Result<()> {
                 std::process::exit(EXIT_CANCEL);
             }
             println!("{command}");
-            return Ok(()); // exit 0: run it
-        }
-        if input == "e" && !command.is_empty() {
-            println!("{command}");
-            std::process::exit(EXIT_EDIT);
+            return Ok(()); // exit 0: put it on the prompt
         }
         let _ = rl.add_history_entry(input);
         let query = if command.is_empty() {
@@ -92,7 +87,7 @@ pub fn run(shell: &str) -> Result<()> {
                 command = cmd;
                 if !hinted {
                     hinted = true;
-                    eprintln!("\x1b[2m  ↵ run · e edit · type to refine · ^C cancel\x1b[0m");
+                    eprintln!("\x1b[2m  ↵ accept · type to refine · ^C cancel\x1b[0m");
                 }
             }
             Err(e) => eprintln!("\r\x1b[K\x1b[31mshpell: {e:#}\x1b[0m"),
