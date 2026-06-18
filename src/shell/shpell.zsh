@@ -30,13 +30,17 @@ _shpell_compose() {
     return
   fi
   local out rc=1 ttysave
+  # Read from the real terminal device ($TTY, e.g. /dev/ttys001), NOT /dev/tty:
+  # on macOS poll(2) reports POLLNVAL on /dev/tty, so rustyline never sees a
+  # lone Esc time out and Esc cannot cancel. The real pts polls correctly.
+  local dev=${TTY:-/dev/tty}
   zle -I   # shpell compose takes over drawing from here
   ttysave=$(stty -g < /dev/tty 2>/dev/null)
   {
     # zle keeps the tty raw during widgets; give shpell compose a cooked tty
     # so the terminal driver provides line editing and echo for the query
     stty sane < /dev/tty 2>/dev/null
-    out=$(COLUMNS=$COLUMNS command shpell compose --shell zsh < /dev/tty 2> /dev/tty)
+    out=$(COLUMNS=$COLUMNS command shpell compose --shell zsh < $dev 2> /dev/tty)
     rc=$?
   } always {
     [[ -n $ttysave ]] && stty "$ttysave" < /dev/tty 2>/dev/null

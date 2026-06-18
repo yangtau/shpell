@@ -7,6 +7,13 @@ fzf-widget 的方式启动 `shpell compose`（stdin/stderr 接 tty，stdout 被�
 结束后按退出码处理 —— `0` 把命令放上 prompt（不执行，由用户决定下一步），
 其余取消。非空行的 Tab 委派给原有补全 widget（兼容 fzf-tab 等）。
 
+**stdin 必须接真实的 pts 设备（zsh 用 `$TTY`、bash 用 `$(tty)`，如
+`/dev/ttys001`），不能用 `/dev/tty`**：macOS 上 `poll(2)` 对 `/dev/tty`
+恒返回 `POLLNVAL`，rustyline 因此永远等不到 lone Esc 超时 —— Esc 被和下一个
+按键拼成 Meta 组合键，导致 Esc 无法取消。真实 pts 可以正常 poll。
+（`shpell compose` 内部不再用 rustyline 的 `Behavior::PreferTerm`，改为直接读
+fd 0；stdout 用 `dup` 腾挪后让 fd 1 指向 stderr/tty，只把最终命令写回原 stdout。）
+
 整个交互界面（图标、流式输出、spinner 动画、追问循环）都在 `shpell compose`
 （`src/compose.rs`）里完成，**完全不经过 zle**。自然语言从不接触 shell
 解析，因此没有语法高亮误判、history expansion（`!`）、PS2 续行这些问题；

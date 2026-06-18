@@ -35,12 +35,16 @@ _shpell_compose() {
     return
   fi
   bind '"\C-x\C-y2": ""'  # empty line: swallow the second macro key
-  local out rc=1 ttysave
+  local out rc=1 ttysave dev
+  # Read from the real terminal device ($(tty), e.g. /dev/ttys001), NOT
+  # /dev/tty: on macOS poll(2) reports POLLNVAL on /dev/tty, so rustyline never
+  # sees a lone Esc time out and Esc cannot cancel. The real pts polls right.
+  dev=$(tty 2>/dev/null); [[ $dev == /dev/* ]] || dev=/dev/tty
   ttysave=$(stty -g < /dev/tty 2>/dev/null)
   # give shpell compose a cooked tty so the terminal driver provides line
   # editing and echo for the query
   stty sane < /dev/tty 2>/dev/null
-  out=$(COLUMNS=$COLUMNS command shpell compose --shell bash < /dev/tty 2> /dev/tty)
+  out=$(COLUMNS=$COLUMNS command shpell compose --shell bash < "$dev" 2> /dev/tty)
   rc=$?
   [[ -n $ttysave ]] && stty "$ttysave" < /dev/tty 2>/dev/null
   if ((rc == 0)); then
