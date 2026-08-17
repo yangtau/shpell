@@ -78,9 +78,10 @@ Supporting modules:
   `README.zh.md` (Chinese) — keep them in sync. Design rationale lives in
   `docs/design.md` (Chinese); update it when behavior changes (exit codes,
   keybindings, interaction flow).
-- CI (`.github/workflows/ci.yml`) tests on Linux/macOS. Each push to main
-  publishes stripped release binaries to a rolling `prebuilt` GitHub Release
-  and records SRI hashes in `nix/prebuilt-hashes.json`;
+- CI (`.github/workflows/ci.yml`) tests on Linux/macOS. Publish jobs call
+  `yangtau/nix-prebuilt` (shared `lib.mkPackages` + reusable workflow):
+  stripped binaries go to a rolling `prebuilt` GitHub Release and SRI
+  hashes are recorded in `nix/prebuilt-hashes.json`.
   `nix profile add github:yangtau/shpell` downloads those instead of compiling.
   A dirty checkout or a system with no published hash builds from source
   (`nix build .#shpell-from-source` forces that).
