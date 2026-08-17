@@ -81,7 +81,7 @@ Supporting modules:
 - CI (`.github/workflows/ci.yml`) tests on Linux/macOS. Publish jobs call
   `yangtau/nix-prebuilt` (shared `lib.mkPackages` + reusable workflow):
   stripped binaries go to a rolling `prebuilt` GitHub Release and SRI
-  hashes are recorded in `nix/prebuilt-hashes.json`.
+  hashes are recorded in `.nix/prebuilt-hashes.json`.
   `nix profile add github:yangtau/shpell` downloads those instead of compiling.
   A dirty checkout or a system with no published hash builds from source
   (`nix build .#shpell-from-source` forces that).

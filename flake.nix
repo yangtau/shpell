@@ -21,7 +21,7 @@
         pname = "shpell";
         owner = "yangtau";
         repo = "shpell";
-        hashes = ./nix/prebuilt-hashes.json;
+        hashes = ./.nix/prebuilt-hashes.json;
         fromSource =
           pkgs:
           pkgs.rustPlatform.buildRustPackage {

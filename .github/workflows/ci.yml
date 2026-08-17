@@ -36,4 +36,5 @@ jobs:
     uses: yangtau/nix-prebuilt/.github/workflows/publish.yml@main
     with:
       name: shpell
+      hashes-path: .nix/prebuilt-hashes.json
     secrets: inherit
