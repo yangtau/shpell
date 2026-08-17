@@ -35,10 +35,15 @@ m3 :: ~/.config ‹main*› » touch test
 
 ### Nix
 
+每次推送到 `main` 都会发布预编译二进制。Nix 会下载这些产物，而不是本地编译：
+
 ```sh
 nix profile add github:yangtau/shpell
 # 或在 flake 中引用 inputs.shpell.url = "github:yangtau/shpell";
 ```
+
+脏工作区、或尚未记录该平台 hash 时，会改为从源码编译。
+强制从源码编译：`nix build .#shpell-from-source`。
 
 ### Cargo
 

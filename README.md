@@ -41,10 +41,16 @@ interactive UI that lives outside the zsh prompt. Type what you want after
 
 ### Nix
 
+Each push to `main` publishes release binaries. Nix downloads those instead of
+compiling:
+
 ```sh
 nix profile add github:yangtau/shpell
 # or in a flake: inputs.shpell.url = "github:yangtau/shpell";
 ```
+
+A dirty checkout, or a system with no published hash, builds from source.
+Force a source build with `nix build .#shpell-from-source`.
 
 ### Cargo
 

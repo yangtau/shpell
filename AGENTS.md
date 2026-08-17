@@ -78,6 +78,10 @@ Supporting modules:
   `README.zh.md` (Chinese) — keep them in sync. Design rationale lives in
   `docs/design.md` (Chinese); update it when behavior changes (exit codes,
   keybindings, interaction flow).
-- CI (`.github/workflows/ci.yml`) builds release artifacts for
-  linux-musl/macOS on every push to main; a `v*` tag also publishes a GitHub
-  Release with the tarballs.
+- CI (`.github/workflows/ci.yml`) tests on Linux/macOS. Each push to main
+  publishes stripped release binaries to a rolling `prebuilt` GitHub Release
+  and records SRI hashes in `nix/prebuilt-hashes.json`;
+  `nix profile add github:yangtau/shpell` downloads those instead of compiling.
+  A dirty checkout or a system with no published hash builds from source
+  (`nix build .#shpell-from-source` forces that). A `v*` tag also publishes
+  musl/macOS tarballs as a versioned GitHub Release.
