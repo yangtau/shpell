@@ -79,7 +79,7 @@ Supporting modules:
   `docs/design.md` (Chinese); update it when behavior changes (exit codes,
   keybindings, interaction flow).
 - CI (`.github/workflows/ci.yml`) tests on Linux/macOS. Publish jobs call
-  `yangtau/nix-prebuilt` (shared `lib.mkPackages` + reusable workflow):
+  `yangtau/nix-rust-prebuilt` (shared `lib.mkPackages` + reusable workflow):
   stripped binaries go to a rolling `prebuilt` GitHub Release and SRI
   hashes are recorded in `.nix/prebuilt-hashes.json`.
   `nix profile add github:yangtau/shpell` downloads those instead of compiling.

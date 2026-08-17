@@ -2,10 +2,10 @@
   description = "shpell: write shell commands in natural language";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-  inputs.nix-prebuilt.url = "github:yangtau/nix-prebuilt";
+  inputs.nix-rust-prebuilt.url = "github:yangtau/nix-rust-prebuilt";
 
   outputs =
-    { self, nixpkgs, nix-prebuilt }:
+    { self, nixpkgs, nix-rust-prebuilt }:
     let
       inherit (nixpkgs) lib;
       systems = [ "aarch64-darwin" "aarch64-linux" "x86_64-linux" ];
@@ -16,7 +16,7 @@
       };
     in
     {
-      packages = nix-prebuilt.lib.mkPackages {
+      packages = nix-rust-prebuilt.lib.mkPackages {
         inherit self nixpkgs meta systems;
         pname = "shpell";
         owner = "yangtau";
