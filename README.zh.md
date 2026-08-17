@@ -53,9 +53,10 @@ cargo install --path .
 
 ### 预编译二进制
 
-从 [GitHub Releases](https://github.com/yangtau/shpell/releases) 下载对应平台的
-压缩包（Linux x86_64 / arm64 / armv7，均为 musl 静态链接；macOS arm64 /
-x86_64），解压后放进 `PATH` 即可。
+同一批包也在滚动的
+[`prebuilt`](https://github.com/yangtau/shpell/releases/tag/prebuilt)
+Release 上（Linux x86_64 / arm64，macOS arm64）。解压后把 `shpell` 放进
+`PATH` 即可。
 
 ## 快速开始
 

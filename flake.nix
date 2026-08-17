@@ -6,7 +6,7 @@
   outputs = { self, nixpkgs }:
     let
       inherit (nixpkgs) lib;
-      systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+      systems = [ "aarch64-darwin" "aarch64-linux" "x86_64-linux" ];
       forAllSystems = f: lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
       prebuilt = builtins.fromJSON (builtins.readFile ./nix/prebuilt-hashes.json);
 

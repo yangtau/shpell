@@ -1,9 +1,8 @@
-name: ci
+name: CI
 
 on:
   push:
     branches: [main]
-    tags: ["v*"]
   pull_request:
   workflow_dispatch:
 
@@ -12,7 +11,7 @@ permissions:
 
 jobs:
   test:
-    name: test (${{ matrix.os }})
+    name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -25,7 +24,7 @@ jobs:
       - run: cargo test --locked
 
   prebuilt:
-    name: prebuilt (${{ matrix.system }})
+    name: Prebuilt (${{ matrix.system }})
     if: >-
       github.ref == 'refs/heads/main'
       && (github.event_name == 'workflow_dispatch'
@@ -39,37 +38,29 @@ jobs:
         include:
           - os: ubuntu-latest
             system: x86_64-linux
-            target: x86_64-unknown-linux-gnu
           - os: ubuntu-24.04-arm
             system: aarch64-linux
-            target: aarch64-unknown-linux-gnu
           - os: macos-latest
             system: aarch64-darwin
-            target: aarch64-apple-darwin
-          - os: macos-latest
-            system: x86_64-darwin
-            target: x86_64-apple-darwin
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
       - uses: Swatinem/rust-cache@v2
         with:
           key: prebuilt-${{ matrix.system }}
       - name: Build release binary
         env:
           CARGO_PROFILE_RELEASE_STRIP: symbols
-        run: cargo build --release --locked --target ${{ matrix.target }}
+        run: cargo build --release --locked
       - name: Package
-        run: tar -czf "shpell-${{ matrix.system }}.tar.gz" -C target/${{ matrix.target }}/release shpell
+        run: tar -czf "shpell-${{ matrix.system }}.tar.gz" -C target/release shpell
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.system }}
           path: shpell-${{ matrix.system }}.tar.gz
 
   publish-prebuilt:
-    name: publish prebuilt
+    name: Publish prebuilt
     if: >-
       github.ref == 'refs/heads/main'
       && (github.event_name == 'workflow_dispatch'
@@ -119,7 +110,6 @@ jobs:
           systems = [
               "aarch64-darwin",
               "aarch64-linux",
-              "x86_64-darwin",
               "x86_64-linux",
           ]
           Path("nix/prebuilt-hashes.json").write_text(
@@ -155,65 +145,3 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "chore(nix): record prebuilt hashes for ${sha:0:7}"
           git push origin HEAD:main
-
-  release-build:
-    name: release-build (${{ matrix.target }})
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [test]
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-musl
-          # native build on the free arm64 Linux runner
-          - os: ubuntu-24.04-arm
-            target: aarch64-unknown-linux-musl
-          # no apt musl cross-toolchain for armv7 — link with zig instead
-          - os: ubuntu-latest
-            target: armv7-unknown-linux-musleabihf
-            zigbuild: true
-          - os: macos-latest
-            target: aarch64-apple-darwin
-          # cross-compiled on the arm64 runner — macos-13 (the last x86_64
-          # runner image) queues for a long time
-          - os: macos-latest
-            target: x86_64-apple-darwin
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-      - name: Install musl tools
-        if: runner.os == 'Linux' && !matrix.zigbuild
-        run: sudo apt-get update && sudo apt-get install -y musl-tools
-      - name: Install cargo-zigbuild
-        if: matrix.zigbuild
-        run: pip3 install cargo-zigbuild
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: ${{ matrix.target }}
-      - run: cargo ${{ matrix.zigbuild && 'zigbuild' || 'build' }} --release --locked --target ${{ matrix.target }}
-      - name: Package
-        run: tar czf shpell-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release shpell
-      - uses: actions/upload-artifact@v4
-        with:
-          name: shpell-${{ matrix.target }}
-          path: shpell-${{ matrix.target }}.tar.gz
-
-  release:
-    name: release
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: release-build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          merge-multiple: true
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: "*.tar.gz"
-          generate_release_notes: true

@@ -83,5 +83,4 @@ Supporting modules:
   and records SRI hashes in `nix/prebuilt-hashes.json`;
   `nix profile add github:yangtau/shpell` downloads those instead of compiling.
   A dirty checkout or a system with no published hash builds from source
-  (`nix build .#shpell-from-source` forces that). A `v*` tag also publishes
-  musl/macOS tarballs as a versioned GitHub Release.
+  (`nix build .#shpell-from-source` forces that).
