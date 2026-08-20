@@ -8,7 +8,11 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "shpell", version, about = "Write shell commands in natural language")]
+#[command(
+    name = "shpell",
+    version,
+    about = "Write shell commands in natural language"
+)]
 struct Cli {
     #[command(subcommand)]
     cmd: Cmd,
@@ -51,17 +55,35 @@ enum Cmd {
 
 #[derive(Subcommand)]
 enum AuthCmd {
-    /// Log in with your ChatGPT subscription (OAuth)
-    Login,
+    /// Log in with a ChatGPT or xAI (SuperGrok / X Premium) subscription (OAuth)
+    Login {
+        /// Provider to log in to (openai-chatgpt or xai-grok). Defaults to config.
+        provider: Option<String>,
+    },
     /// Remove stored credentials
-    Logout,
+    Logout {
+        /// Provider to log out of. Defaults to config.
+        provider: Option<String>,
+    },
     /// Show current login status
     Status,
 }
 
 const SUBCOMMANDS: &[&str] = &[
-    "gen", "compose", "auth", "init", "help", "-h", "--help", "-V", "--version",
+    "gen",
+    "compose",
+    "auth",
+    "init",
+    "help",
+    "-h",
+    "--help",
+    "-V",
+    "--version",
 ];
+
+fn auth_provider(explicit: Option<String>) -> Result<String> {
+    Ok(explicit.unwrap_or(config::Config::load()?.provider))
+}
 
 /// Best-effort shell detection for the `--shell` defaults: the basename of
 /// $SHELL, falling back to zsh.
@@ -109,8 +131,8 @@ fn run(cli: Cli) -> Result<()> {
             compose::run(&shell, initial)?
         }
         Cmd::Auth { cmd } => match cmd {
-            AuthCmd::Login => auth::login()?,
-            AuthCmd::Logout => auth::logout()?,
+            AuthCmd::Login { provider } => auth::login(&auth_provider(provider)?)?,
+            AuthCmd::Logout { provider } => auth::logout(&auth_provider(provider)?)?,
             AuthCmd::Status => auth::status()?,
         },
         Cmd::Init { shell } => print!("{}", shell::init_script(&shell)?),

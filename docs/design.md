@@ -31,16 +31,20 @@ spinner 也不会与 zle 重绘互相干扰。
 ## Provider 抽象
 
 `src/provider/mod.rs` 定义 `Provider` trait（输入自然语言 + shell/os/cwd 上下文，
-输出单行命令），由 `config.toml` 的 `provider` 字段选择实现。目前唯一实现
-`openai-chatgpt`：
+输出单行命令），由 `config.toml` 的 `provider` 字段选择实现。目前两个实现：
 
-- 认证走 OpenAI 官方 Codex 公共客户端的 OAuth PKCE 流程
-  （`auth.openai.com`，本机 1455 回调），即 openclaw / opencode 接 ChatGPT
-  订阅的同一套机制，token 存于 `~/.local/share/shpell/auth.json`（0600），
-  过期前自动 refresh。
-- 请求打到 `chatgpt.com/backend-api/codex/responses`（Responses API、
-  SSE-only、`store: false`，需 `ChatGPT-Account-Id` header），按订阅计费，
-  不消耗 API 余额。
+- `openai-chatgpt`（默认）：认证走 OpenAI 官方 Codex 公共客户端的 OAuth PKCE
+  流程（`auth.openai.com`，本机 1455 回调），即 openclaw / opencode 接
+  ChatGPT 订阅的同一套机制，token 存于
+  `~/.local/share/shpell/openai-chatgpt.json`（0600），过期前自动
+  refresh。请求打到 `chatgpt.com/backend-api/codex/responses`
+  （Responses API、SSE-only、`store: false`，需 `ChatGPT-Account-Id`
+  header），按订阅计费，不消耗 API 余额。
+- `xai-grok`：认证走 xAI 官方 Grok CLI 公共客户端的 OAuth PKCE 流程
+  （`auth.x.ai`，loopback `/callback`，accounts.x.ai 以 CORS fetch 回传
+  code），token 存于 `~/.local/share/shpell/xai-grok.json`（0600）。请求打到
+  `api.x.ai/v1/responses`（同样是 Responses API + SSE），使用 SuperGrok /
+  X Premium 订阅额度，不消耗 xAI API 余额。`shpell auth login xai-grok`。
 
 新增 provider（如 Anthropic、本地模型）只需实现 trait 并在
 `provider::from_config` 注册。

@@ -32,7 +32,7 @@ interactive UI that lives outside the zsh prompt. Type what you want after
 - **Streaming UI** — commands appear as they are generated, with a Claude
   Code-style pulsing spinner
 - **Multi-turn refinement** — not quite right? Just say what to change
-- **Uses your ChatGPT subscription** — OAuth login, no API key, no API credits
+- **Uses your ChatGPT or xAI subscription** — OAuth login, no API key, no API credits
 - **Clean by construction** — the interaction runs in its own process, never
   through zle, so your natural language is never shell-parsed, highlighted or
   history-expanded
@@ -67,14 +67,16 @@ your `PATH`.
 
 ## Quick start
 
-1. Log in with your ChatGPT subscription (OAuth, no API key):
+1. Log in with a subscription (OAuth, no API key):
 
    ```sh
-   shpell auth login
+   shpell auth login                 # ChatGPT (default)
+   shpell auth login xai-grok        # SuperGrok / X Premium
    ```
 
-   This prints a login URL; finish authorization in the browser (the callback
-   listens on localhost:1455, same mechanism as the Codex CLI).
+   This prints a login URL; finish authorization in the browser. ChatGPT
+   uses the Codex CLI callback on localhost:1455; xAI opens the Grok OAuth
+   flow (same SuperGrok / X Premium subscription as Grok Build).
 
 2. Add to the end of `~/.zshrc` — or, for bash (4.0+), `~/.bashrc`:
 
@@ -95,9 +97,15 @@ that request already submitted.
 `~/.config/shpell/config.toml` (optional):
 
 ```toml
-provider = "openai-chatgpt"   # the only provider for now
+# ChatGPT subscription (default)
+provider = "openai-chatgpt"
 model = "gpt-5.4-mini"
 reasoning_effort = "low"       # none | low | medium | high | xhigh (varies by model)
+
+# or SuperGrok / X Premium — then `shpell auth login xai-grok`
+# provider = "xai-grok"
+# model = "grok-4.6"
+# reasoning_effort = "low"
 ```
 
 Icons used in Shpell mode (plain Unicode, any font works; `export` them

@@ -111,7 +111,9 @@ pub fn run(shell: &str, initial: Option<String>) -> Result<()> {
         let query = if command.is_empty() {
             input.to_string()
         } else {
-            format!("Previously generated command: `{command}`. Revise it per this request: {input}")
+            format!(
+                "Previously generated command: `{command}`. Revise it per this request: {input}"
+            )
         };
         let req = GenRequest {
             query,

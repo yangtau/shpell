@@ -1,31 +1,28 @@
-//! Provider backed by a ChatGPT subscription via the codex backend
-//! (`chatgpt.com/backend-api/codex/responses`), authenticated with the
-//! OAuth tokens from `shpell auth login`. No per-token API billing.
+//! Provider backed by a SuperGrok / X Premium subscription via xAI OAuth
+//! (`shpell auth login xai-grok`). Requests go to the public Responses API
+//! (`api.x.ai/v1/responses`) with the subscription token — no API key.
 
 use super::{GenRequest, Provider};
-use crate::auth::{self, OPENAI_CHATGPT};
+use crate::auth::{self, XAI_GROK};
 use crate::config::Config;
 use anyhow::{bail, Context, Result};
 use serde_json::json;
 
-const URL: &str = "https://chatgpt.com/backend-api/codex/responses";
+const URL: &str = "https://api.x.ai/v1/responses";
 
-pub struct OpenAiChatGpt {
+pub struct XaiGrok {
     cfg: Config,
 }
 
-impl OpenAiChatGpt {
+impl XaiGrok {
     pub fn new(cfg: Config) -> Self {
         Self { cfg }
     }
 }
 
-impl Provider for OpenAiChatGpt {
+impl Provider for XaiGrok {
     fn generate(&self, req: &GenRequest, on_progress: &mut dyn FnMut(&str)) -> Result<String> {
-        let tokens = auth::access(OPENAI_CHATGPT)?;
-        if tokens.account_id.is_empty() {
-            bail!("ChatGPT account id missing, run `shpell auth login {OPENAI_CHATGPT}`");
-        }
+        let tokens = auth::access(XAI_GROK)?;
 
         let body = json!({
             "model": self.cfg.model,
@@ -34,8 +31,6 @@ impl Provider for OpenAiChatGpt {
                 super::message("developer", &super::developer_prompt(req)),
                 super::message("user", &req.query),
             ],
-            // The codex backend only supports streaming and rejects
-            // persisted conversations.
             "stream": true,
             "store": false,
             "reasoning": { "effort": self.cfg.reasoning_effort },
@@ -44,18 +39,16 @@ impl Provider for OpenAiChatGpt {
         let resp = reqwest::blocking::Client::new()
             .post(URL)
             .bearer_auth(&tokens.access_token)
-            .header("ChatGPT-Account-Id", &tokens.account_id)
-            .header("OpenAI-Beta", "responses=experimental")
-            .header("originator", "codex_cli_rs")
+            .header("User-Agent", concat!("shpell/", env!("CARGO_PKG_VERSION")))
             .header("Accept", "text/event-stream")
             .json(&body)
             .send()
-            .context("request to ChatGPT backend failed")?;
+            .context("request to xAI failed")?;
 
         if !resp.status().is_success() {
             let status = resp.status();
             let text = resp.text().unwrap_or_default();
-            bail!("ChatGPT backend returned {status}: {text}");
+            bail!("xAI returned {status}: {text}");
         }
 
         super::read_responses_sse(resp, on_progress)

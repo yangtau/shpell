@@ -56,14 +56,19 @@ Supporting modules:
   bare `shpell` and `shpell <free text>` both open Shpell mode. `--shell`
   defaults derive from `$SHELL`.
 - `src/provider/` — `Provider` trait (`generate` with an `on_progress`
-  streaming callback) plus `from_config` registry. The only implementation,
-  `openai_chatgpt.rs`, calls `chatgpt.com/backend-api/codex/responses`
-  (SSE-only Responses API) using a ChatGPT subscription — no API key.
-  `postprocess` strips code fences / `$ ` prefixes and keeps the first line.
-  New providers: implement the trait, register in `from_config`.
-- `src/auth.rs` — OAuth PKCE against `auth.openai.com` using the public Codex
-  CLI client id, callback on localhost:1455. Tokens live in the platform data
-  dir under `shpell/auth.json` (0600) and auto-refresh.
+  streaming callback) plus `from_config` registry. Implementations:
+  `openai_chatgpt.rs` (`chatgpt.com/backend-api/codex/responses`, ChatGPT
+  subscription) and `xai_grok.rs` (`api.x.ai/v1/responses`, SuperGrok / X
+  Premium). Both are SSE-only Responses API, no API key. `postprocess`
+  strips code fences / `$ ` prefixes and keeps the first line. New
+  providers: implement the trait, register in `from_config`.
+- `src/auth.rs` — OAuth PKCE. ChatGPT: `auth.openai.com`, Codex CLI client
+  id, callback on localhost:1455. xAI: `auth.x.ai`, Grok CLI client id,
+  loopback `/callback` (CORS from accounts.x.ai). Tokens in
+  `~/.local/share/shpell/<provider>.json` (`openai-chatgpt.json`,
+  `xai-grok.json`), 0600, auto-refresh. Deliberately XDG-style on every
+  platform including macOS (do not switch to `dirs::data_dir()`).
+  `shpell auth login [provider]` defaults to `config.provider`.
 - `src/config.rs` — `~/.config/shpell/config.toml`. Deliberately XDG-style on
   every platform including macOS (do not switch to `dirs::config_dir()`).
 - `src/shell/mod.rs` — maps shell name → embedded integration script. New

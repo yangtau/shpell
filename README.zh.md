@@ -27,7 +27,7 @@ m3 :: ~/.config ‹main*› » touch test
   （兼容 fzf-tab 等插件）；生成的命令永远停在 prompt 上等你确认，不会自动执行
 - **流式生成**：命令边生成边显示，带脉冲 spinner 动画
 - **多轮追问**：命令不满意可以继续用自然语言修改
-- **用 ChatGPT 订阅**：OAuth 登录，无需 API key，不消耗 API 余额
+- **用 ChatGPT 或 xAI 订阅**：OAuth 登录，无需 API key，不消耗 API 余额
 - **干净的实现**：交互在独立进程里完成，不经过 zle —— 自然语言永远不会
   被 shell 解析、高亮或做 history expansion
 
@@ -60,14 +60,16 @@ Release 上（Linux x86_64 / arm64，macOS arm64）。解压后把 `shpell` 放�
 
 ## 快速开始
 
-1. 登录（使用 ChatGPT 订阅，OAuth，无需 API key）：
+1. 登录（OAuth，无需 API key）：
 
    ```sh
-   shpell auth login
+   shpell auth login                 # ChatGPT（默认）
+   shpell auth login xai-grok        # SuperGrok / X Premium
    ```
 
-   会打印一个登录 URL，在浏览器中完成授权即可（回调监听本机 1455 端口，
-   与 Codex CLI 相同的方式）。
+   会打印一个登录 URL，在浏览器中完成授权即可。ChatGPT 走 Codex CLI 的
+   localhost:1455 回调；xAI 走 Grok OAuth（与 Grok Build 同一份 SuperGrok /
+   X Premium 订阅）。
 
 2. 在 `~/.zshrc` 末尾加入（bash 用户（4.0+）改在 `~/.bashrc`）：
 
@@ -86,9 +88,15 @@ Release 上（Linux x86_64 / arm64，macOS arm64）。解压后把 `shpell` 放�
 `~/.config/shpell/config.toml`（可选）：
 
 ```toml
-provider = "openai-chatgpt"   # 目前唯一支持的 provider
+# ChatGPT 订阅（默认）
+provider = "openai-chatgpt"
 model = "gpt-5.4-mini"
 reasoning_effort = "low"       # none | low | medium | high | xhigh（随 model 而异）
+
+# 或 SuperGrok / X Premium —— 然后执行 `shpell auth login xai-grok`
+# provider = "xai-grok"
+# model = "grok-4.6"
+# reasoning_effort = "low"
 ```
 
 Shpell 模式的图标（纯 Unicode，任意字体可显示；`export` 后生效）：
